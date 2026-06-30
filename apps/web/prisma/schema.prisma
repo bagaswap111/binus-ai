@@ -1,0 +1,360 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  SD
+  SMP
+  SMA
+  S1
+  S2
+  S3
+  TEACHER
+  LECTURER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum ModelProvider {
+  OPENAI
+  ANTHROPIC
+  GOOGLE
+  AZURE_OPENAI
+  OLLAMA
+  CUSTOM
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String
+  password      String
+  role          UserRole
+  nimNisn       String?
+  gradeLevel    Int?
+  schoolId      String
+  school        School   @relation(fields: [schoolId], references: [id])
+  image         String?
+  preferredModelId String?
+
+  projects     Project[]
+  chatSessions ChatSession[]
+  subjectsTaught Subject[] @relation("TeacherSubjects")
+  examsCreated   Exam[]
+  examResults    ExamResult[]
+  examViolations ProctoringViolation[]
+  questionsCreated QuestionBank[] @relation("QuestionBankTeacher")
+  studyGroupsCreated StudyGroup[] @relation("StudyGroupCreator")
+  studyGroupMemberships StudyGroupMember[]
+  groupMessages GroupMessage[]
+  forumsCreated DiscussionForum[] @relation("ForumCreator")
+  forumPosts DiscussionPost[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model School {
+  id        String   @id @default(cuid())
+  name      String
+  domain    String   @unique
+  type      String
+  ssoConfig Json?
+  address   String?
+  logo      String?
+
+  users   User[]
+  subjects Subject[]
+  models  ModelRegistry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Subject {
+  id          String   @id @default(cuid())
+  name        String
+  code        String
+  description String?
+  schoolId    String
+  school      School   @relation(fields: [schoolId], references: [id])
+  teacherId   String?
+  teacher     User?    @relation("TeacherSubjects", fields: [teacherId], references: [id])
+  agentPrompt String?
+
+  projects     Project[]
+  chatSessions ChatSession[]
+
+  knowledge KnowledgeBase[]
+  exams     Exam[]
+  questions QuestionBank[]
+  studyGroups StudyGroup[]
+  forums    DiscussionForum[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model KnowledgeBase {
+  id        String   @id @default(cuid())
+  subjectId String
+  subject   Subject  @relation(fields: [subjectId], references: [id])
+  title     String
+  content   String
+  source    String?
+  embedding Json?    @ignore // ponytail: vector search nanti, disable dulu
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ChatSession {
+  id        String    @id @default(cuid())
+  title     String?
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  subjectId String?
+  subject   Subject?  @relation(fields: [subjectId], references: [id])
+  projectId String?
+  project   Project?  @relation(fields: [projectId], references: [id])
+  modelId   String?
+  isArchived Boolean  @default(false)
+
+  messages  Message[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  sessionId  String
+  session    ChatSession @relation(fields: [sessionId], references: [id])
+  role       String
+  content    String
+  tokenCount Int?
+  modelUsed  String?
+  latency    Int?
+  cost       Float?
+
+  createdAt  DateTime @default(now())
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  subjectId   String?
+  subject     Subject? @relation(fields: [subjectId], references: [id])
+  isPublic    Boolean  @default(false)
+  tags        String[]
+
+  files        ProjectFile[]
+  chatSessions ChatSession[]
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model ProjectFile {
+  id        String   @id @default(cuid())
+  name      String
+  type      String
+  url       String
+  size      Int
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+enum ExamStatus {
+  DRAFT
+  PUBLISHED
+  IN_PROGRESS
+  COMPLETED
+  GRADED
+}
+
+enum ExamResultStatus {
+  IN_PROGRESS
+  SUBMITTED
+  GRADED
+}
+
+model Exam {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?
+  instructions String?
+  questions    Json     // [{type, question, options?, maxScore, bloomLevel?}]
+  rubric       Json?    // [{questionIndex, criteria, scoringGuide}]
+  subjectId    String
+  subject      Subject  @relation(fields: [subjectId], references: [id])
+  teacherId    String
+  teacher      User     @relation(fields: [teacherId], references: [id])
+  duration     Int      // menit
+  startTime    DateTime?
+  endTime      DateTime?
+  maxScore     Int      @default(100)
+  passingScore Int      @default(0)
+  status       ExamStatus @default(DRAFT)
+
+  results     ExamResult[]
+  violations  ProctoringViolation[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model ExamResult {
+  id          String   @id @default(cuid())
+  examId      String
+  exam        Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     User     @relation(fields: [studentId], references: [id])
+  answers     Json?    // [{questionIndex, question, answer, score?, feedback?}]
+  totalScore  Int?
+  status      ExamResultStatus @default(IN_PROGRESS)
+  flagged     Boolean  @default(false)
+  flagReason  String?
+  submittedAt DateTime?
+  gradedAt    DateTime?
+  gradedBy    String?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([examId, studentId])
+}
+
+model ProctoringViolation {
+  id          String   @id @default(cuid())
+  examId      String
+  exam        Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     User     @relation(fields: [studentId], references: [id])
+  type        String   // tab_switch, fullscreen_exit, idle_timeout, face_missing
+  details     String?
+  timestamp   DateTime @default(now())
+
+  createdAt   DateTime @default(now())
+}
+
+model QuestionBank {
+  id          String   @id @default(cuid())
+  subjectId   String
+  subject     Subject  @relation(fields: [subjectId], references: [id])
+  teacherId   String
+  teacher     User     @relation("QuestionBankTeacher", fields: [teacherId], references: [id])
+  type        String   // essay, multiple_choice, short_answer
+  question    String
+  options     Json?    // untuk multiple_choice
+  answer      String?  // kunci jawaban
+  maxScore    Int      @default(10)
+  bloomLevel  String?  // C1-C6
+  tags        String[]
+  difficulty  String?  // easy, medium, hard
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ponytail: study groups — real-time group chat with AI facilitator
+model StudyGroup {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  subjectId   String?
+  subject     Subject? @relation(fields: [subjectId], references: [id])
+  createdById String
+  createdBy   User     @relation("StudyGroupCreator", fields: [createdById], references: [id])
+  isActive    Boolean  @default(true)
+
+  members  StudyGroupMember[]
+  messages GroupMessage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model StudyGroupMember {
+  id        String   @id @default(cuid())
+  groupId   String
+  group     StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  role      String   @default("member") // member, admin
+
+  @@unique([groupId, userId])
+}
+
+model GroupMessage {
+  id        String   @id @default(cuid())
+  groupId   String
+  group     StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  content   String
+  isAi      Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+}
+
+model DiscussionForum {
+  id        String   @id @default(cuid())
+  subjectId String?
+  subject   Subject? @relation(fields: [subjectId], references: [id])
+  title     String
+  description String?
+  createdById String
+  createdBy   User     @relation("ForumCreator", fields: [createdById], references: [id])
+  isPinned  Boolean  @default(false)
+
+  posts DiscussionPost[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DiscussionPost {
+  id        String   @id @default(cuid())
+  forumId   String
+  forum     DiscussionForum @relation(fields: [forumId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  content   String
+  isFlagged Boolean  @default(false)
+  flagReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ModelRegistry {
+  id            String   @id @default(cuid())
+  name          String
+  modelId       String
+  provider      ModelProvider
+  providerUrl   String?
+  capabilities  String[]
+  maxTokens     Int
+  costPerInput  Float
+  costPerOutput Float
+  isLocal       Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  schoolId      String
+  school        School   @relation(fields: [schoolId], references: [id])
+  allowedRoles  UserRole[]
+  minGradeLevel Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
