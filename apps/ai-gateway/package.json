@@ -1,0 +1,9 @@
+{
+  "name": "ai-gateway",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "python3 -m uvicorn app.main:app --reload --port 8000",
+    "start": "python3 -m uvicorn app.main:app --port 8000"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "binus-ai",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "npm run dev -w apps/web",
+    "dev:gateway": "npm run dev -w apps/ai-gateway",
+    "build": "npm run build -w apps/web",
+    "lint": "npm run lint -w apps/web"
+  }
+}
