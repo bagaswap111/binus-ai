@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { safeFetchJSON, safeFetch } from "@/lib/security"
 
 interface ExamResult {
   id: string
@@ -43,13 +44,13 @@ export default function ExamResultsPage() {
   const isTeacher = ["TEACHER", "LECTURER", "ADMIN", "SUPER_ADMIN"].includes(session?.user?.role || "")
 
   useEffect(() => {
-    fetch(`/api/exams/${params.id}`).then((r) => r.ok && r.json()).then(setExam)
-    fetch(`/api/exams/${params.id}/results`).then((r) => r.ok && r.json()).then(setResults)
-    fetch(`/api/exams/${params.id}/violations`).then((r) => r.ok && r.json()).then(setViolations)
+    safeFetchJSON<ExamDetail>(`/api/exams/${params.id}`).then((d) => d && setExam(d))
+    safeFetchJSON<ExamResult[]>(`/api/exams/${params.id}/results`).then((d) => d && setResults(d))
+    safeFetchJSON<Violation[]>(`/api/exams/${params.id}/violations`).then((d) => d && setViolations(d))
   }, [params.id])
 
   async function autoGrade(resultId: string) {
-    await fetch(`/api/exams/${params.id}/auto-grade`, {
+    await safeFetch(`/api/exams/${params.id}/auto-grade`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ resultId }),
@@ -94,7 +95,7 @@ export default function ExamResultsPage() {
       {results.some((r) => r.status === "SUBMITTED") && (
         <button onClick={async () => {
           for (const r of results.filter((r) => r.status === "SUBMITTED")) {
-            await fetch(`/api/exams/${params.id}/auto-grade`, {
+            await safeFetch(`/api/exams/${params.id}/auto-grade`, {
               method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resultId: r.id }),
             })
           }

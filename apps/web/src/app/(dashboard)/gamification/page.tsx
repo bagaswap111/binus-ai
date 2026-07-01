@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { safeFetchJSON } from "@/lib/security"
 
 export default function GamificationPage() {
   const [xpData, setXpData] = useState<{ xp: number; level: number; streak: number; badges: any[] } | null>(null)
@@ -9,15 +10,16 @@ export default function GamificationPage() {
   const [tab, setTab] = useState("overview")
 
   useEffect(() => {
-    fetch("/api/gamification/xp").then((r) => r.ok && r.json()).then(setXpData)
-    fetch("/api/gamification/leaderboard").then((r) => r.ok && r.json()).then((d) => setLeaderboard(d.leaderboard))
-    fetch("/api/gamification/challenges").then((r) => r.ok && r.json()).then((d) => setChallenges(d.challenges))
+    safeFetchJSON<{ xp: number; level: number; streak: number; badges: any[] }>("/api/gamification/xp").then((d) => d && setXpData(d))
+    safeFetchJSON<{ leaderboard: any[] }>("/api/gamification/leaderboard").then((d) => d && setLeaderboard(d.leaderboard))
+    safeFetchJSON<{ challenges: any[] }>("/api/gamification/challenges").then((d) => d && setChallenges(d.challenges))
   }, [])
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold text-foreground">Gamification</h1>
 
+      <div role="tabpanel" id="panel-overview" aria-labelledby="tab-overview">
       {/* Stats cards */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <div className="rounded-xl border bg-card p-4">
@@ -53,17 +55,22 @@ export default function GamificationPage() {
             style={{ width: `${xpData ? ((xpData.xp % 100) / 100) * 100 : 0}%` }} />
         </div>
       </div>
+      </div>
 
-      <div className="tab-list">
+      <div className="tab-list" role="tablist" aria-label="Gamification">
         {([["overview", "Ringkasan"], ["badges", "Badges"], ["leaderboard", "Peringkat"], ["challenges", "Tantangan"]] as const).map(([k, l]) => (
           <button key={k} onClick={() => setTab(k)}
             className={`tab ${tab === k ? "tab-active" : ""}`}
+            role="tab"
+            aria-selected={tab === k}
+            aria-controls={`panel-${k}`}
+            id={`tab-${k}`}
           >{l}</button>
         ))}
       </div>
 
       {tab === "badges" && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+        <div role="tabpanel" id="panel-badges" aria-labelledby="tab-badges" className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
           {xpData?.badges?.map((b: any) => (
             <div key={b.id} className="rounded-xl border p-4 text-center">
               <div className="text-3xl mb-2">🎖️</div>
@@ -78,7 +85,7 @@ export default function GamificationPage() {
       )}
 
       {tab === "leaderboard" && (
-        <div className="rounded-xl border">
+        <div role="tabpanel" id="panel-leaderboard" aria-labelledby="tab-leaderboard" className="rounded-xl border">
           {leaderboard.map((entry, i) => (
             <div key={i} className={`flex items-center justify-between px-4 py-3 ${i < leaderboard.length - 1 ? "border-b" : ""}`}>
               <div className="flex items-center gap-3">
@@ -98,7 +105,7 @@ export default function GamificationPage() {
       )}
 
       {tab === "challenges" && (
-        <div className="space-y-3">
+        <div role="tabpanel" id="panel-challenges" aria-labelledby="tab-challenges" className="space-y-3">
           {challenges.map((c: any) => (
             <div key={c.id} className={`rounded-xl border p-4 ${c.completed ? "opacity-60" : ""}`}>
               <div className="flex items-start justify-between">

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { safeFetchJSON, safeFetch } from "@/lib/security"
 
 export default function AnalyticsPage() {
   const [grades, setGrades] = useState<Array<{
@@ -11,8 +12,8 @@ export default function AnalyticsPage() {
   const [gaps, setGaps] = useState<{ gaps: Array<{ examTitle: string; question: string; avgScore: number; intervention: string }>; totalWeakQuestions: number } | null>(null)
   const [tab, setTab] = useState("grades")
 
-  useEffect(() => { fetch("/api/analytics/grades").then((r) => r.ok && r.json()).then(setGrades) }, [])
-  useEffect(() => { fetch("/api/analytics/knowledge-gaps").then((r) => r.ok && r.json()).then(setGaps) }, [])
+  useEffect(() => { safeFetchJSON<Array<{ examId: string; title: string; maxScore: number; count: number; avg: number; min: number; max: number; median: number; distribution: Record<string, number> }>>("/api/analytics/grades").then((d) => d && setGrades(d)) }, [])
+  useEffect(() => { safeFetchJSON<{ gaps: Array<{ examTitle: string; question: string; avgScore: number; intervention: string }>; totalWeakQuestions: number }>("/api/analytics/knowledge-gaps").then((d) => d && setGaps(d)) }, [])
 
   function bar(value: number, max: number, color: string) {
     const pct = max > 0 ? (value / max) * 100 : 0
@@ -29,16 +30,20 @@ export default function AnalyticsPage() {
   return (
     <div>
       <h1 className="mb-6 text-xl font-semibold">Learning Analytics</h1>
-      <div className="tab-list">
+      <div className="tab-list" role="tablist" aria-label="Learning Analytics">
         {["grades", "gaps"].map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={`tab ${tab === t ? "tab-active" : ""}`}
+            role="tab"
+            aria-selected={tab === t}
+            aria-controls={`panel-${t}`}
+            id={`tab-${t}`}
           >{t.replace("-", " ")}</button>
         ))}
       </div>
 
       {tab === "grades" && (
-        <div className="space-y-6">
+        <div role="tabpanel" id="panel-grades" aria-labelledby="tab-grades" className="space-y-6">
           {grades.length === 0 && <p className="text-center text-zinc-400 pt-10">No graded exams yet</p>}
           {grades.map((g) => (
             <div key={g.examId} className="rounded-lg border p-4">
@@ -81,7 +86,7 @@ export default function AnalyticsPage() {
       )}
 
       {tab === "gaps" && (
-        <div className="space-y-4">
+        <div role="tabpanel" id="panel-gaps" aria-labelledby="tab-gaps" className="space-y-4">
           {gaps && gaps.gaps.length === 0 && <p className="text-center text-zinc-400 pt-10">No knowledge gaps detected</p>}
           {gaps && <p className="text-sm text-zinc-500">{gaps.totalWeakQuestions} weak question{gaps.totalWeakQuestions !== 1 ? "s" : ""} identified</p>}
           {gaps?.gaps.map((g, idx) => (

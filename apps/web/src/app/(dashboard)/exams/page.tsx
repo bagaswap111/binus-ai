@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { safeFetchJSON } from "@/lib/security"
 import { useSession } from "next-auth/react"
 
 interface Exam {
@@ -23,7 +24,7 @@ export default function ExamsPage() {
   const isTeacher = ["TEACHER", "LECTURER", "ADMIN", "SUPER_ADMIN"].includes(session?.user?.role || "")
 
   useEffect(() => {
-    fetch("/api/exams").then((r) => r.ok && r.json()).then(setExams)
+    safeFetchJSON<Exam[]>("/api/exams").then((d) => d && setExams(d))
   }, [])
 
   return (

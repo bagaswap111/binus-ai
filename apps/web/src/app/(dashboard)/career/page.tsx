@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { safeFetch, safeFetchJSON } from "@/lib/security"
 
 type Tab = "recommend" | "universities" | "interview" | "portfolio"
 
@@ -18,20 +19,24 @@ export default function CareerPage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold text-foreground">Career & University Preparation</h1>
 
-      <div className="tab-list">
+      <div className="tab-list" role="tablist" aria-label="Career and University Preparation">
         {tabs.map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className={`tab ${tab === t.key ? "tab-active" : ""}`}
+            role="tab"
+            aria-selected={tab === t.key}
+            aria-controls={`panel-${t.key}`}
+            id={`tab-${t.key}`}
           >
             {t.label}
           </button>
         ))}
       </div>
 
-      {tab === "recommend" && <CareerRecommender />}
-      {tab === "universities" && <UniversityMatcher />}
-      {tab === "interview" && <MockInterview />}
-      {tab === "portfolio" && <PortfolioBuilder />}
+      {tab === "recommend" && <div role="tabpanel" id="panel-recommend" aria-labelledby="tab-recommend"><CareerRecommender /></div>}
+      {tab === "universities" && <div role="tabpanel" id="panel-universities" aria-labelledby="tab-universities"><UniversityMatcher /></div>}
+      {tab === "interview" && <div role="tabpanel" id="panel-interview" aria-labelledby="tab-interview"><MockInterview /></div>}
+      {tab === "portfolio" && <div role="tabpanel" id="panel-portfolio" aria-labelledby="tab-portfolio"><PortfolioBuilder /></div>}
     </div>
   )
 }
@@ -54,12 +59,12 @@ function CareerRecommender() {
 
   async function handleSubmit() {
     setLoading(true)
-    const res = await fetch("/api/career/recommend", {
+    const res = await safeFetch("/api/career/recommend", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ scores, interests: interests.split(",").map((s) => s.trim()).filter(Boolean) }),
     })
-    if (res.ok) {
+    if (res) {
       const data = await res.json()
       setResults(data.recommendations)
     }
@@ -142,12 +147,12 @@ function UniversityMatcher() {
 
   async function handleSubmit() {
     setLoading(true)
-    const res = await fetch("/api/career/universities", {
+    const res = await safeFetch("/api/career/universities", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ gpa: parseFloat(gpa), majorInterest: major, location }),
     })
-    if (res.ok) {
+    if (res) {
       const data = await res.json()
       setResults(data.universities)
     }
@@ -229,11 +234,11 @@ function MockInterview() {
 
   async function startInterview() {
     setLoading(true)
-    const res = await fetch("/api/career/interview", {
+    const res = await safeFetch("/api/career/interview", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ mode: "start", topic: mode }),
     })
-    if (res.ok) {
+    if (res) {
       const data = await res.json()
       setQuestion(data.question); setQi(data.questionIndex); setTotal(data.total)
       setStarted(true); setFeedback(null); setDone(false); setAnswer("")
@@ -243,11 +248,11 @@ function MockInterview() {
 
   async function submitAnswer(answerMode: string) {
     setLoading(true)
-    const res = await fetch("/api/career/interview", {
+    const res = await safeFetch("/api/career/interview", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ mode: answerMode, answer, questionIndex: qi, topic: mode }),
     })
-    if (res.ok) {
+    if (res) {
       const data = await res.json()
       if (data.done) { setDone(true); setStarted(false) }
       else if (answerMode === "feedback") { setFeedback(data.feedback?.content || JSON.stringify(data.feedback)) }
@@ -320,11 +325,11 @@ function PortfolioBuilder() {
 
   async function loadPortfolio() {
     setLoading(true)
-    const res = await fetch("/api/career/portfolio", {
+    const res = await safeFetch("/api/career/portfolio", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({}),
     })
-    if (res.ok) {
+    if (res) {
       const data = await res.json()
       setPortfolio(data.portfolio)
     }

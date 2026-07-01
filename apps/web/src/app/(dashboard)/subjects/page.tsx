@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { safeFetchJSON } from "@/lib/security"
 
 interface Subject {
   id: string
@@ -15,7 +16,7 @@ export default function SubjectsPage() {
   const router = useRouter()
 
   useEffect(() => {
-    fetch("/api/subjects").then((r) => r.ok && r.json()).then(setSubjects)
+    safeFetchJSON<Subject[]>("/api/subjects").then((d) => d && setSubjects(d))
   }, [])
 
   return (

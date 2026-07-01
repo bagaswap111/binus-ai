@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
+import { safeFetchJSON, safeFetch } from "@/lib/security"
 
 interface Question {
   type: string
@@ -33,7 +34,7 @@ export default function TakeExamPage() {
     const key = `${type}:${details}`
     if (violationsSent.current.has(key)) return
     violationsSent.current.add(key)
-    fetch(`/api/exams/${params.id}/violations`, {
+    safeFetch(`/api/exams/${params.id}/violations`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ type, details }),
@@ -62,6 +63,13 @@ export default function TakeExamPage() {
     }
   }, [logViolation])
 
+  // warn on navigate away / tab close during active exam
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = "" }
+    window.addEventListener("beforeunload", handler)
+    return () => window.removeEventListener("beforeunload", handler)
+  }, [])
+
   // detect fullscreen exit
   useEffect(() => {
     const onFSChange = () => {
@@ -75,10 +83,7 @@ export default function TakeExamPage() {
   }, [logViolation])
 
   useEffect(() => {
-    fetch(`/api/exams/${params.id}`).then((r) => r.ok && r.json()).then((data) => {
-      setExam(data)
-      setTimeLeft(data.duration * 60)
-    })
+    safeFetchJSON<ExamDetail>(`/api/exams/${params.id}`).then((d) => { if (d) { setExam(d); setTimeLeft(d.duration * 60) } })
   }, [params.id])
 
   useEffect(() => {
@@ -105,7 +110,7 @@ export default function TakeExamPage() {
       question: exam?.questions[Number(questionIndex)]?.question || "",
       answer,
     }))
-    await fetch(`/api/exams/${params.id}/submit`, {
+    await safeFetch(`/api/exams/${params.id}/submit`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ answers: formatted }),

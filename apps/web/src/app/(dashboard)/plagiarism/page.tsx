@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { safeFetchJSON, safeFetch } from "@/lib/security"
 
 interface Project {
   id: string
@@ -21,18 +22,18 @@ export default function PlagiarismPage() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    fetch("/api/projects").then((r) => r.ok && r.json()).then(setProjects)
+    safeFetchJSON<Project[]>("/api/projects").then((d) => d && setProjects(d))
   }, [])
 
   async function check() {
     if (!selected) return
     setLoading(true)
-    const res = await fetch("/api/plagiarism", {
+    const res = await safeFetch("/api/plagiarism", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ projectId: selected }),
     })
-    if (res.ok) setResults((await res.json()).results)
+    if (res) setResults((await res.json()).results)
     setLoading(false)
   }
 
@@ -41,7 +42,8 @@ export default function PlagiarismPage() {
       <h1 className="mb-6 text-xl font-semibold">Plagiarism Checker</h1>
 
       <div className="mb-6 flex gap-3">
-        <select value={selected} onChange={(e) => setSelected(e.target.value)} className="flex-1">
+        <label htmlFor="plag-project" className="sr-only">Select Project</label>
+        <select id="plag-project" value={selected} onChange={(e) => setSelected(e.target.value)} className="flex-1">
           <option value="">Select a project</option>
           {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>

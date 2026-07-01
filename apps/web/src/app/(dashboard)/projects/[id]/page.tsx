@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
+import { safeFetchJSON, safeFetch } from "@/lib/security"
 
 interface ProjectFile {
   id: string
@@ -26,17 +27,17 @@ export default function ProjectDetailPage() {
   const fileInput = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    fetch(`/api/projects/${id}`).then((r) => r.ok && r.json()).then(setProject)
+    safeFetchJSON<Project>(`/api/projects/${id}`).then((d) => d && setProject(d))
   }, [id])
 
   async function upload(file: File) {
     setUploading(true)
     const form = new FormData()
     form.append("file", file)
-    const res = await fetch(`/api/projects/${id}`, { method: "POST", body: form })
-    if (res.ok) {
-      const res2 = await fetch(`/api/projects/${id}`)
-      if (res2.ok) setProject(await res2.json())
+    const res = await safeFetch(`/api/projects/${id}`, { method: "POST", body: form })
+    if (res) {
+      const res2 = await safeFetch(`/api/projects/${id}`)
+      if (res2) setProject(await res2.json())
     }
     setUploading(false)
   }

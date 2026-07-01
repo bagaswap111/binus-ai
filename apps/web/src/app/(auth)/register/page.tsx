@@ -2,6 +2,7 @@
 
 import { signIn } from "next-auth/react"
 import { useState, useEffect } from "react"
+import { safeFetchJSON, safeFetch } from "@/lib/security"
 
 interface School {
   id: string
@@ -13,9 +14,16 @@ export default function RegisterPage() {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
+  // ponytail: warn on navigate away with unsaved form data
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = "" }
+    window.addEventListener("beforeunload", handler)
+    return () => window.removeEventListener("beforeunload", handler)
+  }, [])
+
   useEffect(() => {
     // ponytail: fetch schools for registration
-    fetch("/api/schools").then((r) => r.ok && r.json()).catch(() => {})
+    safeFetchJSON("/api/schools")
   }, [])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -23,7 +31,7 @@ export default function RegisterPage() {
     setLoading(true)
     setError("")
     const form = new FormData(e.currentTarget)
-    const res = await fetch("/api/register", {
+    const res = await safeFetch("/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -34,9 +42,8 @@ export default function RegisterPage() {
         schoolId: form.get("schoolId"),
       }),
     })
-    if (!res.ok) {
-      const data = await res.json()
-      setError(data.error || "Registration failed")
+    if (!res) {
+      setError("Registration failed")
       setLoading(false)
       return
     }
@@ -54,10 +61,8 @@ export default function RegisterPage() {
   }
 
   const fetchSchools = async () => {
-    try {
-      const res = await fetch("/api/schools")
-      if (res.ok) setSchools(await res.json())
-    } catch {}
+    const res = await safeFetch("/api/schools")
+    if (res) setSchools(await res.json())
   }
 
   useEffect(() => { fetchSchools() }, [])

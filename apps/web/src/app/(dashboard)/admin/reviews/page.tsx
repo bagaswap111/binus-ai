@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { safeFetchJSON, safeFetch } from "@/lib/security"
 
 export default function ReviewsPage() {
   const [reviews, setReviews] = useState<any[]>([])
@@ -9,8 +10,8 @@ export default function ReviewsPage() {
 
   const load = async (status: string) => {
     setLoading(true)
-    const r = await fetch(`/api/admin/reviews?status=${status}`)
-    if (r.ok) {
+    const r = await safeFetch(`/api/admin/reviews?status=${status}`)
+    if (r) {
       const d = await r.json()
       setReviews(d.reviews)
     }
@@ -20,12 +21,14 @@ export default function ReviewsPage() {
   useEffect(() => { load(tab) }, [tab])
 
   const handleAction = async (reviewId: string, status: string, reviewerNote?: string) => {
-    await fetch("/api/admin/reviews", {
+    const label = status === "APPROVED" ? "approve" : "reject"
+    if (!confirm(`Are you sure you want to ${label} this review?`)) return
+    const res = await safeFetch("/api/admin/reviews", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ reviewId, status, reviewerNote }),
     })
-    load(tab)
+    if (res) load(tab)
   }
 
   const levelColor = (c: string) => {
@@ -39,7 +42,7 @@ export default function ReviewsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-foreground">Content Review Queue</h1>
-        <div className="flex gap-2">
+        <div className="flex gap-2" role="tablist" aria-label="Review status">
           {["PENDING", "APPROVED", "REJECTED"].map((s) => (
             <button key={s} onClick={() => setTab(s)}
               className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
@@ -47,11 +50,16 @@ export default function ReviewsPage() {
                   ? "bg-foreground text-background"
                   : "bg-muted text-muted-foreground hover:text-foreground"
               }`}
+              role="tab"
+              aria-selected={tab === s}
+              aria-controls={`panel-${s}`}
+              id={`tab-${s}`}
             >{s === "PENDING" ? "⏳ Pending" : s === "APPROVED" ? "✅ Approved" : "❌ Rejected"}</button>
           ))}
         </div>
       </div>
 
+      <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
       {loading ? (
         <p className="text-muted-foreground">Loading...</p>
       ) : reviews.length === 0 ? (
@@ -84,6 +92,7 @@ export default function ReviewsPage() {
               </div>
               {tab === "PENDING" && (
                 <div className="flex items-center gap-2">
+                  <label htmlFor={`note-${r.id}`} className="sr-only">Reviewer Note</label>
                   <input id={`note-${r.id}`} placeholder="Catatan (opsional)"
                     className="flex-1 px-3 py-1.5 text-sm rounded-lg border bg-background text-foreground" />
                   <button onClick={() => {
@@ -107,6 +116,7 @@ export default function ReviewsPage() {
           ))}
         </div>
       )}
+      </div>
     </div>
   )
 }

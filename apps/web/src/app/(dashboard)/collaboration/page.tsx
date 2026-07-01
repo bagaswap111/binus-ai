@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { safeFetchJSON, safeFetch } from "@/lib/security"
 
 export default function CollaborationPage() {
   const [tab, setTab] = useState("groups")
@@ -8,15 +9,19 @@ export default function CollaborationPage() {
   return (
     <div>
       <h1 className="mb-6 text-xl font-semibold">Collaboration</h1>
-      <div className="tab-list">
+      <div className="tab-list" role="tablist" aria-label="Collaboration">
         {["groups", "forums"].map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={`tab ${tab === t ? "tab-active" : ""}`}
+            role="tab"
+            aria-selected={tab === t}
+            aria-controls={`panel-${t}`}
+            id={`tab-${t}`}
           >{t}</button>
         ))}
       </div>
-      {tab === "groups" && <GroupsTab />}
-      {tab === "forums" && <ForumsTab />}
+      {tab === "groups" && <div role="tabpanel" id="panel-groups" aria-labelledby="tab-groups"><GroupsTab /></div>}
+      {tab === "forums" && <div role="tabpanel" id="panel-forums" aria-labelledby="tab-forums"><ForumsTab /></div>}
     </div>
   )
 }
@@ -29,37 +34,37 @@ function GroupsTab() {
   const [showForm, setShowForm] = useState(false)
   const [formName, setFormName] = useState("")
 
-  useEffect(() => { fetch("/api/groups").then((r) => r.ok && r.json()).then(setGroups) }, [])
+  useEffect(() => { safeFetchJSON<Array<{ id: string; name: string; description: string | null; _count: { members: number; messages: number }; subject: { name: string } | null }>>("/api/groups").then((d) => d && setGroups(d)) }, [])
 
   async function selectGroup(id: string) {
     setSelected(id)
-    const res = await fetch(`/api/groups/${id}/messages`)
-    if (res.ok) setMessages(await res.json())
+    const res = await safeFetch(`/api/groups/${id}/messages`)
+    if (res) setMessages(await res.json())
   }
 
   async function sendMessage() {
     if (!newMsg.trim() || !selected) return
-    const res = await fetch(`/api/groups/${selected}/messages`, {
+    const res = await safeFetch(`/api/groups/${selected}/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content: newMsg }),
     })
-    if (res.ok) {
+    if (res) {
       setNewMsg("")
-      const res2 = await fetch(`/api/groups/${selected}/messages`)
-      if (res2.ok) setMessages(await res2.json())
+      const res2 = await safeFetch(`/api/groups/${selected}/messages`)
+      if (res2) setMessages(await res2.json())
     }
   }
 
   async function createGroup() {
-    await fetch("/api/groups", {
+    await safeFetch("/api/groups", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: formName }),
     })
     setShowForm(false)
     setFormName("")
-    fetch("/api/groups").then((r) => r.ok && r.json()).then(setGroups)
+    safeFetchJSON<Array<{ id: string; name: string; description: string | null; _count: { members: number; messages: number }; subject: { name: string } | null }>>("/api/groups").then((d) => d && setGroups(d))
   }
 
   return (
@@ -122,37 +127,37 @@ function ForumsTab() {
   const [showForm, setShowForm] = useState(false)
   const [formTitle, setFormTitle] = useState("")
 
-  useEffect(() => { fetch("/api/forums").then((r) => r.ok && r.json()).then(setForums) }, [])
+  useEffect(() => { safeFetchJSON<Array<{ id: string; title: string; description: string | null; _count: { posts: number }; subject: { name: string } | null; createdBy: { name: string }; isPinned: boolean }>>("/api/forums").then((d) => d && setForums(d)) }, [])
 
   async function selectForum(id: string) {
     setSelected(id)
-    const res = await fetch(`/api/forums/${id}/posts`)
-    if (res.ok) setPosts(await res.json())
+    const res = await safeFetch(`/api/forums/${id}/posts`)
+    if (res) setPosts(await res.json())
   }
 
   async function createPost() {
     if (!newPost.trim() || !selected) return
-    const res = await fetch(`/api/forums/${selected}/posts`, {
+    const res = await safeFetch(`/api/forums/${selected}/posts`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content: newPost }),
     })
-    if (res.ok) {
+    if (res) {
       setNewPost("")
-      const res2 = await fetch(`/api/forums/${selected}/posts`)
-      if (res2.ok) setPosts(await res2.json())
+      const res2 = await safeFetch(`/api/forums/${selected}/posts`)
+      if (res2) setPosts(await res2.json())
     }
   }
 
   async function createForum() {
-    await fetch("/api/forums", {
+    await safeFetch("/api/forums", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: formTitle }),
     })
     setShowForm(false)
     setFormTitle("")
-    fetch("/api/forums").then((r) => r.ok && r.json()).then(setForums)
+    safeFetchJSON<Array<{ id: string; title: string; description: string | null; _count: { posts: number }; subject: { name: string } | null; createdBy: { name: string }; isPinned: boolean }>>("/api/forums").then((d) => d && setForums(d))
   }
 
   return (

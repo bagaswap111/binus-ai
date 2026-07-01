@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { safeFetchJSON, safeFetch } from "@/lib/security"
 
 interface Model {
   id: string
@@ -19,11 +20,11 @@ export default function AdminPage() {
   const [modelId, setModelId] = useState("")
   const [provider, setProvider] = useState("OPENAI")
 
-  useEffect(() => { fetch("/api/admin/models").then((r) => r.ok && r.json()).then(setModels) }, [])
+  useEffect(() => { safeFetchJSON<Model[]>("/api/admin/models").then((d) => d && setModels(d)) }, [])
 
   async function addModel(e: React.FormEvent) {
     e.preventDefault()
-    const res = await fetch("/api/admin/models", {
+    const res = await safeFetch("/api/admin/models", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -37,7 +38,7 @@ export default function AdminPage() {
         allowedRoles: ["SD", "SMP", "SMA", "S1", "S2", "S3", "TEACHER", "LECTURER"],
       }),
     })
-    if (res.ok) {
+    if (res) {
       setShowForm(false); setName(""); setModelId(""); setProvider("OPENAI")
       const m = await res.json()
       setModels((prev) => [...prev, m])
@@ -45,12 +46,14 @@ export default function AdminPage() {
   }
 
   async function toggleModel(m: Model) {
-    await fetch("/api/admin/models", {
+    const action = m.isActive ? "deactivate" : "activate"
+    if (!confirm(`Are you sure you want to ${action} ${m.name}?`)) return
+    const res = await safeFetch("/api/admin/models", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: m.id, isActive: !m.isActive }),
     })
-    setModels((prev) => prev.map((x) => (x.id === m.id ? { ...x, isActive: !x.isActive } : x)))
+    if (res) setModels((prev) => prev.map((x) => (x.id === m.id ? { ...x, isActive: !x.isActive } : x)))
   }
 
   return (
@@ -66,9 +69,12 @@ export default function AdminPage() {
 
       {showForm && (
         <form onSubmit={addModel} className="mb-6 space-y-3 rounded-lg border p-4">
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Display Name (e.g. GPT-4o Mini)" required className="w-full rounded-md border px-3 py-2 text-sm" />
-          <input value={modelId} onChange={(e) => setModelId(e.target.value)} placeholder="Model ID (e.g. gpt-4o-mini)" required className="w-full rounded-md border px-3 py-2 text-sm" />
-          <select value={provider} onChange={(e) => setProvider(e.target.value)}>
+          <label htmlFor="admin-name" className="sr-only">Display Name</label>
+          <input id="admin-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Display Name (e.g. GPT-4o Mini)" required className="w-full rounded-md border px-3 py-2 text-sm" />
+          <label htmlFor="admin-modelid" className="sr-only">Model ID</label>
+          <input id="admin-modelid" value={modelId} onChange={(e) => setModelId(e.target.value)} placeholder="Model ID (e.g. gpt-4o-mini)" required className="w-full rounded-md border px-3 py-2 text-sm" />
+          <label htmlFor="admin-provider" className="sr-only">Provider</label>
+          <select id="admin-provider" value={provider} onChange={(e) => setProvider(e.target.value)}>
             <option value="OPENAI">OpenAI</option>
             <option value="ANTHROPIC">Anthropic</option>
             <option value="GOOGLE">Google</option>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { safeFetchJSON, safeFetch } from "@/lib/security"
 
 interface QBQuestion {
   id: string
@@ -22,7 +23,7 @@ export default function QuestionsPage() {
   const [showForm, setShowForm] = useState(false)
 
   useEffect(() => {
-    fetch("/api/questions").then((r) => r.ok && r.json()).then(setQuestions)
+    safeFetchJSON<QBQuestion[]>("/api/questions").then((d) => d && setQuestions(d))
   }, [])
 
   return (
@@ -34,7 +35,7 @@ export default function QuestionsPage() {
         </button>
       </div>
 
-      {showForm && <QuestionForm onDone={() => { setShowForm(false); fetch("/api/questions").then((r) => r.ok && r.json()).then(setQuestions) }} />}
+      {showForm && <QuestionForm onDone={() => { setShowForm(false); safeFetchJSON<QBQuestion[]>("/api/questions").then((d) => d && setQuestions(d)) }} />}
 
       <div className="space-y-3">
         {questions.map((q) => (
@@ -67,7 +68,7 @@ function QuestionForm({ onDone }: { onDone: () => void }) {
     maxScore: 10, bloomLevel: "", tags: "", difficulty: "",
   })
 
-  useEffect(() => { fetch("/api/subjects").then((r) => r.ok && r.json()).then(setSubjects) }, [])
+  useEffect(() => { safeFetchJSON<{ id: string; name: string; code: string }[]>("/api/subjects").then((d) => d && setSubjects(d)) }, [])
 
   async function handleSubmit() {
     await fetch("/api/questions", {
@@ -85,40 +86,49 @@ function QuestionForm({ onDone }: { onDone: () => void }) {
   return (
     <div className="mb-6 rounded-lg border p-4 space-y-3">
       <div className="flex gap-3">
-          <select value={form.subjectId} onChange={(e) => setForm({ ...form, subjectId: e.target.value })} className="flex-1">
+          <label htmlFor="q-subject" className="sr-only">Subject</label>
+          <select id="q-subject" value={form.subjectId} onChange={(e) => setForm({ ...form, subjectId: e.target.value })} className="flex-1">
           <option value="">Subject</option>
           {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
-        <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
+        <label htmlFor="q-type" className="sr-only">Type</label>
+        <select id="q-type" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
           <option value="essay">Essay</option>
           <option value="multiple_choice">Multiple Choice</option>
           <option value="short_answer">Short Answer</option>
         </select>
-        <select value={form.bloomLevel} onChange={(e) => setForm({ ...form, bloomLevel: e.target.value })}>
+        <label htmlFor="q-bloom" className="sr-only">Bloom Level</label>
+        <select id="q-bloom" value={form.bloomLevel} onChange={(e) => setForm({ ...form, bloomLevel: e.target.value })}>
           <option value="">Bloom Level</option>
           {BLOOM_LEVELS.map((b) => <option key={b} value={b}>{b}</option>)}
         </select>
-        <select value={form.difficulty} onChange={(e) => setForm({ ...form, difficulty: e.target.value })}>
+        <label htmlFor="q-diff" className="sr-only">Difficulty</label>
+        <select id="q-diff" value={form.difficulty} onChange={(e) => setForm({ ...form, difficulty: e.target.value })}>
           <option value="">Difficulty</option>
           <option value="easy">Easy</option>
           <option value="medium">Medium</option>
           <option value="hard">Hard</option>
         </select>
-        <input type="number" value={form.maxScore} onChange={(e) => setForm({ ...form, maxScore: Number(e.target.value) })} className="w-20 rounded border px-3 py-1.5 text-sm outline-none" placeholder="Score" />
+        <label htmlFor="q-score" className="sr-only">Max Score</label>
+        <input id="q-score" type="number" value={form.maxScore} onChange={(e) => setForm({ ...form, maxScore: Number(e.target.value) })} className="w-20 rounded border px-3 py-1.5 text-sm outline-none" placeholder="Score" />
       </div>
-      <textarea value={form.question} onChange={(e) => setForm({ ...form, question: e.target.value })} className="w-full rounded border px-3 py-1.5 text-sm outline-none" rows={2} placeholder="Question" />
+      <label htmlFor="q-text" className="sr-only">Question</label>
+      <textarea id="q-text" value={form.question} onChange={(e) => setForm({ ...form, question: e.target.value })} className="w-full rounded border px-3 py-1.5 text-sm outline-none" rows={2} placeholder="Question" />
       {form.type === "multiple_choice" && form.options.map((opt, i) => (
         <div key={i} className="flex items-center gap-2">
           <input type="radio" name="correct" checked={form.answer === String.fromCharCode(97 + i)} onChange={() => setForm({ ...form, answer: String.fromCharCode(97 + i) })} />
-          <input value={opt} onChange={(e) => {
+          <label htmlFor={`q-opt-${i}`} className="sr-only">Option {String.fromCharCode(65 + i)}</label>
+          <input id={`q-opt-${i}`} value={opt} onChange={(e) => {
             const opts = [...form.options]; opts[i] = e.target.value; setForm({ ...form, options: opts })
           }} className="flex-1 rounded border px-3 py-1 text-sm outline-none" placeholder={`Option ${String.fromCharCode(65 + i)}`} />
         </div>
       ))}
-      {form.type === "short_answer" && (
-        <input value={form.answer} onChange={(e) => setForm({ ...form, answer: e.target.value })} className="w-full rounded border px-3 py-1.5 text-sm outline-none" placeholder="Correct answer" />
-      )}
-      <input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} className="w-full rounded border px-3 py-1.5 text-sm outline-none" placeholder="Tags (comma-separated)" />
+      {form.type === "short_answer" && (<>
+        <label htmlFor="q-answer" className="sr-only">Correct Answer</label>
+        <input id="q-answer" value={form.answer} onChange={(e) => setForm({ ...form, answer: e.target.value })} className="w-full rounded border px-3 py-1.5 text-sm outline-none" placeholder="Correct answer" />
+      </>)}
+      <label htmlFor="q-tags" className="sr-only">Tags</label>
+      <input id="q-tags" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} className="w-full rounded border px-3 py-1.5 text-sm outline-none" placeholder="Tags (comma-separated)" />
       <button onClick={handleSubmit} disabled={!form.subjectId || !form.question} className="rounded-lg bg-zinc-900 px-4 py-2 text-sm text-white disabled:opacity-50">Save</button>
     </div>
   )

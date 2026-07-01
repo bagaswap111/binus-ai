@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { safeFetchJSON, safeFetch } from "@/lib/security"
 
 export default function AcademicWritingPage() {
   const [tab, setTab] = useState("literature")
@@ -9,20 +10,24 @@ export default function AcademicWritingPage() {
     <div>
       <h1 className="mb-6 text-xl font-semibold">Academic Writing Tools</h1>
 
-      <div className="tab-list">
+      <div className="tab-list" role="tablist" aria-label="Academic Writing Tools">
         {["literature", "citation", "structure", "outline"].map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={`tab ${tab === t ? "tab-active" : ""}`}
+            role="tab"
+            aria-selected={tab === t}
+            aria-controls={`panel-${t}`}
+            id={`tab-${t}`}
           >
             {t.replace("_", " ")}
           </button>
         ))}
       </div>
 
-      {tab === "literature" && <LitReviewTab />}
-      {tab === "citation" && <CitationTab />}
-      {tab === "structure" && <StructureTab />}
-      {tab === "outline" && <OutlineTab />}
+      {tab === "literature" && <div role="tabpanel" id="panel-literature" aria-labelledby="tab-literature"><LitReviewTab /></div>}
+      {tab === "citation" && <div role="tabpanel" id="panel-citation" aria-labelledby="tab-citation"><CitationTab /></div>}
+      {tab === "structure" && <div role="tabpanel" id="panel-structure" aria-labelledby="tab-structure"><StructureTab /></div>}
+      {tab === "outline" && <div role="tabpanel" id="panel-outline" aria-labelledby="tab-outline"><OutlineTab /></div>}
     </div>
   )
 }
@@ -33,17 +38,17 @@ function LitReviewTab() {
   const [matrix, setMatrix] = useState<Array<{ title: string; theme: string; methodology: string; keyFindings: string }> | null>(null)
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => { fetch("/api/projects").then((r) => r.ok && r.json()).then(setProjects) }, [])
+  useEffect(() => { safeFetchJSON<Array<{ id: string; name: string }>>("/api/projects").then((d) => d && setProjects(d)) }, [])
 
   async function analyze() {
     if (!selected) return
     setLoading(true)
-    const res = await fetch("/api/academic/literature", {
+    const res = await safeFetch("/api/academic/literature", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ projectId: selected }),
     })
-    if (res.ok) setMatrix((await res.json()).matrix)
+    if (res) setMatrix((await res.json()).matrix)
     setLoading(false)
   }
 
@@ -51,9 +56,10 @@ function LitReviewTab() {
     <div>
       <p className="mb-4 text-sm text-zinc-500">Upload articles to a project, then generate a comparison matrix.</p>
       <div className="mb-6 flex gap-3">
-        <select value={selected} onChange={(e) => setSelected(e.target.value)}
+        <label htmlFor="lit-project" className="sr-only">Select Project</label>
+        <select id="lit-project" value={selected} onChange={(e) => setSelected(e.target.value)}
           className="flex-1"
-          onFocus={() => fetch("/api/projects").then((r) => r.ok && r.json()).then(setProjects)}
+          onFocus={() => safeFetchJSON<Array<{ id: string; name: string }>>("/api/projects").then((d) => d && setProjects(d))}
         >
           <option value="">Select project</option>
           {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -104,25 +110,30 @@ function CitationTab() {
   const [citation, setCitation] = useState("")
 
   async function generate() {
-    const res = await fetch("/api/academic/citation", {
+    const res = await safeFetch("/api/academic/citation", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ doi, author, year, title, journal }),
     })
-    if (res.ok) setCitation((await res.json()).citation)
+    if (res) setCitation((await res.json()).citation)
   }
 
   return (
     <div>
       <p className="mb-4 text-sm text-zinc-500">Generate APA/MLA/IEEE citations from DOI or manual input.</p>
       <div className="max-w-lg space-y-3">
-        <input value={doi} onChange={(e) => setDoi(e.target.value)} placeholder="DOI (e.g. 10.1000/xyz)" className="w-full rounded-lg border px-4 py-2 text-sm outline-none" />
+        <label htmlFor="cite-doi" className="sr-only">DOI</label>
+        <input id="cite-doi" value={doi} onChange={(e) => setDoi(e.target.value)} placeholder="DOI (e.g. 10.1000/xyz)" className="w-full rounded-lg border px-4 py-2 text-sm outline-none" />
         <div className="flex gap-3">
-          <input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Author" className="flex-1 rounded-lg border px-4 py-2 text-sm outline-none" />
-          <input value={year} onChange={(e) => setYear(e.target.value)} placeholder="Year" className="w-24 rounded-lg border px-4 py-2 text-sm outline-none" />
+          <label htmlFor="cite-author" className="sr-only">Author</label>
+          <input id="cite-author" value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Author" className="flex-1 rounded-lg border px-4 py-2 text-sm outline-none" />
+          <label htmlFor="cite-year" className="sr-only">Year</label>
+          <input id="cite-year" value={year} onChange={(e) => setYear(e.target.value)} placeholder="Year" className="w-24 rounded-lg border px-4 py-2 text-sm outline-none" />
         </div>
-        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" className="w-full rounded-lg border px-4 py-2 text-sm outline-none" />
-        <input value={journal} onChange={(e) => setJournal(e.target.value)} placeholder="Journal/Publisher" className="w-full rounded-lg border px-4 py-2 text-sm outline-none" />
+        <label htmlFor="cite-title" className="sr-only">Title</label>
+        <input id="cite-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" className="w-full rounded-lg border px-4 py-2 text-sm outline-none" />
+        <label htmlFor="cite-journal" className="sr-only">Journal/Publisher</label>
+        <input id="cite-journal" value={journal} onChange={(e) => setJournal(e.target.value)} placeholder="Journal/Publisher" className="w-full rounded-lg border px-4 py-2 text-sm outline-none" />
         <button onClick={generate} className="rounded-lg bg-zinc-900 px-4 py-2 text-sm text-white">Generate Citation</button>
         {citation && (
           <div className="rounded-lg border bg-zinc-50 p-4 text-sm">
@@ -140,18 +151,19 @@ function StructureTab() {
   const [result, setResult] = useState<{ sections: Array<{ section: string; present: boolean; confidence: string }>; completeness: string; feedback: string } | null>(null)
 
   async function check() {
-    const res = await fetch("/api/academic/structure", {
+    const res = await safeFetch("/api/academic/structure", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text }),
     })
-    if (res.ok) setResult(await res.json())
+    if (res) setResult(await res.json())
   }
 
   return (
     <div>
       <p className="mb-4 text-sm text-zinc-500">Paste your paper text to check IMRaD structure (Introduction, Methods, Results, Discussion).</p>
-      <textarea value={text} onChange={(e) => setText(e.target.value)} rows={8}
+      <label htmlFor="structure-text" className="sr-only">Paper Text</label>
+      <textarea id="structure-text" value={text} onChange={(e) => setText(e.target.value)} rows={8}
         className="w-full rounded-lg border px-4 py-2 text-sm outline-none" placeholder="Paste paper text..." />
       <button onClick={check} disabled={!text} className="mt-3 rounded-lg bg-zinc-900 px-4 py-2 text-sm text-white disabled:opacity-50">
         Check Structure
@@ -180,19 +192,20 @@ function OutlineTab() {
   const [outline, setOutline] = useState<{ title: string; outline: Array<{ section: string; subsections: Array<{ title: string }> }> } | null>(null)
 
   async function generate() {
-    const res = await fetch("/api/academic/outline", {
+    const res = await safeFetch("/api/academic/outline", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ type: "thesis", topic }),
     })
-    if (res.ok) setOutline(await res.json())
+    if (res) setOutline(await res.json())
   }
 
   return (
     <div>
       <p className="mb-4 text-sm text-zinc-500">Generate a thesis/dissertation outline from your topic.</p>
       <div className="flex gap-3">
-        <input value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Research topic" className="flex-1 rounded-lg border px-4 py-2 text-sm outline-none" />
+        <label htmlFor="outline-topic" className="sr-only">Research Topic</label>
+        <input id="outline-topic" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Research topic" className="flex-1 rounded-lg border px-4 py-2 text-sm outline-none" />
         <button onClick={generate} disabled={!topic} className="rounded-lg bg-zinc-900 px-4 py-2 text-sm text-white disabled:opacity-50">
           Generate
         </button>

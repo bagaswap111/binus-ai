@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useSession } from "next-auth/react"
+import { safeFetch } from "@/lib/security"
 
 interface Message {
   id: string
@@ -29,14 +30,14 @@ export default function ChatPage() {
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }) }, [messages])
 
   async function fetchSessions() {
-    const res = await fetch("/api/sessions")
-    if (res.ok) setSessions(await res.json())
+    const res = await safeFetch("/api/sessions")
+    if (res) setSessions(await res.json())
   }
 
   async function loadSession(id: string) {
     setCurrentSessionId(id)
-    const res = await fetch(`/api/chat/${id}`)
-    if (res.ok) {
+    const res = await safeFetch(`/api/chat/${id}`)
+    if (res) {
       const data = await res.json()
       setMessages(data.messages || [])
     }
@@ -51,12 +52,12 @@ export default function ChatPage() {
     setMessages((prev) => [...prev, { id: "tmp", role: "user", content: userMsg }])
 
     try {
-      const res = await fetch("/api/chat", {
+      const res = await safeFetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userMsg, sessionId: currentSessionId }),
       })
-      if (!res.ok) throw new Error("Failed")
+      if (!res) throw new Error("Failed")
       const data = await res.json()
       if (!currentSessionId && data.sessionId) {
         setCurrentSessionId(data.sessionId)

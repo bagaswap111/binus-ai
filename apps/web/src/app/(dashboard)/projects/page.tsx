@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { safeFetchJSON, safeFetch } from "@/lib/security"
 
 interface Project {
   id: string
@@ -18,16 +19,16 @@ export default function ProjectsPage() {
   const [desc, setDesc] = useState("")
   const router = useRouter()
 
-  useEffect(() => { fetch("/api/projects").then((r) => r.ok && r.json()).then(setProjects) }, [])
+  useEffect(() => { safeFetchJSON<Project[]>("/api/projects").then((d) => d && setProjects(d)) }, [])
 
   async function create(e: React.FormEvent) {
     e.preventDefault()
-    const res = await fetch("/api/projects", {
+    const res = await safeFetch("/api/projects", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, description: desc }),
     })
-    if (res.ok) {
+    if (res) {
       setName(""); setDesc(""); setShowForm(false)
       const data = await res.json()
       router.push(`/projects/${data.id}`)

@@ -39,7 +39,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 key={item.href}
                 href={item.href}
                 className={`rounded-md px-3 py-2 text-sm font-medium ${
-                  pathname === item.href ? "bg-secondary text-secondary-foreground" : "text-muted-foreground hover:bg-accent"
+                  pathname === item.href || pathname.startsWith(item.href + "/") ? "bg-secondary text-secondary-foreground" : "text-muted-foreground hover:bg-accent"
                 }`}
               >
                 {item.label}

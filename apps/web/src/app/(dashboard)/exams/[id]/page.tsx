@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { safeFetchJSON, safeFetch } from "@/lib/security"
 
 interface Question {
   type: string
@@ -34,7 +35,7 @@ export default function ExamDetailPage() {
   const isTeacher = ["TEACHER", "LECTURER", "ADMIN", "SUPER_ADMIN"].includes(session?.user?.role || "")
 
   useEffect(() => {
-    fetch(`/api/exams/${params.id}`).then((r) => r.ok && r.json()).then(setExam)
+    safeFetchJSON<ExamDetail>(`/api/exams/${params.id}`).then((d) => d && setExam(d))
   }, [params.id])
 
   if (!exam) return <div className="text-zinc-400 pt-10">Loading...</div>
@@ -99,7 +100,8 @@ export default function ExamDetailPage() {
             </button>
             {exam.status === "DRAFT" && (
               <button onClick={async () => {
-                await fetch(`/api/exams/${params.id}`, {
+                if (!confirm("Publish this exam? Students will be able to see and take it.")) return
+                await safeFetch(`/api/exams/${params.id}`, {
                   method: "PUT",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ status: "PUBLISHED" }),
@@ -111,7 +113,8 @@ export default function ExamDetailPage() {
             )}
             {exam.status === "PUBLISHED" && (
               <button onClick={async () => {
-                await fetch(`/api/exams/${params.id}`, {
+                if (!confirm("Unpublish this exam? Students will no longer be able to access it.")) return
+                await safeFetch(`/api/exams/${params.id}`, {
                   method: "PUT",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ status: "DRAFT" }),
@@ -122,10 +125,9 @@ export default function ExamDetailPage() {
               </button>
             )}
             <button onClick={async () => {
-              if (confirm("Delete this exam?")) {
-                await fetch(`/api/exams/${params.id}`, { method: "DELETE" })
-                router.push("/exams")
-              }
+              if (!confirm("Delete this exam? This cannot be undone.")) return
+              const res = await safeFetch(`/api/exams/${params.id}`, { method: "DELETE" })
+              if (res) router.push("/exams")
             }} className="rounded-lg border border-red-300 px-6 py-2 text-sm text-red-600">
               Delete
             </button>

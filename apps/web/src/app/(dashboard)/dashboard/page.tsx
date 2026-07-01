@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react"
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { safeFetchJSON, safeFetch } from "@/lib/security"
 
 interface DashboardData {
   stats: { examCount: number; projectCount: number; sessionCount: number; pendingGrading: number; avgScore: number | null }
@@ -30,7 +31,7 @@ export default function DashboardPage() {
   const isTeacher = ["TEACHER", "LECTURER", "ADMIN", "SUPER_ADMIN"].includes(role || "")
 
   useEffect(() => {
-    fetch("/api/dashboard").then((r) => r.ok && r.json()).then(setData)
+    safeFetchJSON<DashboardData>("/api/dashboard").then((d) => d && setData(d))
   }, [])
 
   const s = data?.stats

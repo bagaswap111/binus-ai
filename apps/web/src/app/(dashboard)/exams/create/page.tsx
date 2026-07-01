@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { safeFetchJSON, safeFetch } from "@/lib/security"
 
 interface Subject {
   id: string
@@ -30,8 +31,15 @@ export default function CreateExamPage() {
   const [passingScore, setPassingScore] = useState(0)
   const [questions, setQuestions] = useState<Question[]>([])
 
+  // ponytail: warn on navigate away with unsaved form data
   useEffect(() => {
-    fetch("/api/subjects").then((r) => r.ok && r.json()).then(setSubjects)
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = "" }
+    window.addEventListener("beforeunload", handler)
+    return () => window.removeEventListener("beforeunload", handler)
+  }, [])
+
+  useEffect(() => {
+    safeFetchJSON<Subject[]>("/api/subjects").then((d) => d && setSubjects(d))
   }, [])
 
   function addQuestion(type: Question["type"]) {
@@ -47,12 +55,12 @@ export default function CreateExamPage() {
   }
 
   async function handleSubmit() {
-    const res = await fetch("/api/exams", {
+    const res = await safeFetch("/api/exams", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, description, instructions, questions, subjectId, duration, maxScore, passingScore }),
     })
-    if (res.ok) {
+    if (res) {
       const exam = await res.json()
       router.push(`/exams/${exam.id}`)
     }
@@ -63,18 +71,25 @@ export default function CreateExamPage() {
       <h1 className="mb-6 text-xl font-semibold">Create Exam</h1>
 
       <div className="space-y-4">
-        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Exam title" className="w-full rounded-lg border px-4 py-2 text-sm outline-none focus:border-zinc-400" />
-        <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description (optional)" className="w-full rounded-lg border px-4 py-2 text-sm outline-none focus:border-zinc-400" rows={2} />
-        <textarea value={instructions} onChange={(e) => setInstructions(e.target.value)} placeholder="Instructions (optional)" className="w-full rounded-lg border px-4 py-2 text-sm outline-none focus:border-zinc-400" rows={2} />
+        <label htmlFor="exam-title" className="sr-only">Exam Title</label>
+        <input id="exam-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Exam title" className="w-full rounded-lg border px-4 py-2 text-sm outline-none focus:border-zinc-400" />
+        <label htmlFor="exam-desc" className="sr-only">Description</label>
+        <textarea id="exam-desc" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description (optional)" className="w-full rounded-lg border px-4 py-2 text-sm outline-none focus:border-zinc-400" rows={2} />
+        <label htmlFor="exam-instr" className="sr-only">Instructions</label>
+        <textarea id="exam-instr" value={instructions} onChange={(e) => setInstructions(e.target.value)} placeholder="Instructions (optional)" className="w-full rounded-lg border px-4 py-2 text-sm outline-none focus:border-zinc-400" rows={2} />
 
         <div className="flex gap-4">
-          <select value={subjectId} onChange={(e) => setSubjectId(e.target.value)} className="flex-1">
+          <label htmlFor="exam-subject" className="sr-only">Subject</label>
+          <select id="exam-subject" value={subjectId} onChange={(e) => setSubjectId(e.target.value)} className="flex-1">
             <option value="">Select subject</option>
             {subjects.map((s) => <option key={s.id} value={s.id}>{s.name} ({s.code})</option>)}
           </select>
-          <input type="number" value={duration} onChange={(e) => setDuration(Number(e.target.value))} placeholder="Duration (min)" className="w-32 rounded-lg border px-4 py-2 text-sm outline-none focus:border-zinc-400" />
-          <input type="number" value={maxScore} onChange={(e) => setMaxScore(Number(e.target.value))} placeholder="Max score" className="w-28 rounded-lg border px-4 py-2 text-sm outline-none focus:border-zinc-400" />
-          <input type="number" value={passingScore} onChange={(e) => setPassingScore(Number(e.target.value))} placeholder="Passing score" className="w-28 rounded-lg border px-4 py-2 text-sm outline-none focus:border-zinc-400" />
+          <label htmlFor="exam-duration" className="sr-only">Duration (minutes)</label>
+          <input id="exam-duration" type="number" value={duration} onChange={(e) => setDuration(Number(e.target.value))} placeholder="Duration (min)" className="w-32 rounded-lg border px-4 py-2 text-sm outline-none focus:border-zinc-400" />
+          <label htmlFor="exam-maxscore" className="sr-only">Max Score</label>
+          <input id="exam-maxscore" type="number" value={maxScore} onChange={(e) => setMaxScore(Number(e.target.value))} placeholder="Max score" className="w-28 rounded-lg border px-4 py-2 text-sm outline-none focus:border-zinc-400" />
+          <label htmlFor="exam-passing" className="sr-only">Passing Score</label>
+          <input id="exam-passing" type="number" value={passingScore} onChange={(e) => setPassingScore(Number(e.target.value))} placeholder="Passing score" className="w-28 rounded-lg border px-4 py-2 text-sm outline-none focus:border-zinc-400" />
         </div>
 
         <div className="space-y-3">

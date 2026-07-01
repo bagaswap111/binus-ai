@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { safeFetchJSON, safeFetch } from "@/lib/security"
 
 export default function TeachingToolsPage() {
   const [tab, setTab] = useState("syllabus")
@@ -8,16 +9,20 @@ export default function TeachingToolsPage() {
   return (
     <div>
       <h1 className="mb-6 text-xl font-semibold">Teaching Tools</h1>
-      <div className="tab-list">
+      <div className="tab-list" role="tablist" aria-label="Teaching Tools">
         {["syllabus", "learning-path"].map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={`tab ${tab === t ? "tab-active" : ""}`}
+            role="tab"
+            aria-selected={tab === t}
+            aria-controls={`panel-${t}`}
+            id={`tab-${t}`}
           >
             {t.replace("-", " ")}</button>
         ))}
       </div>
-      {tab === "syllabus" && <SyllabusTab />}
-      {tab === "learning-path" && <LearningPathTab />}
+      {tab === "syllabus" && <div role="tabpanel" id="panel-syllabus" aria-labelledby="tab-syllabus"><SyllabusTab /></div>}
+      {tab === "learning-path" && <div role="tabpanel" id="panel-learning-path" aria-labelledby="tab-learning-path"><LearningPathTab /></div>}
     </div>
   )
 }
@@ -27,12 +32,12 @@ function SyllabusTab() {
   const [result, setResult] = useState<{ courseName: string; courseCode: string; credits: number; semester: string; cpmk: string; weeks: Array<{ week: number; topic: string; activities: string }> } | null>(null)
 
   async function generate() {
-    const res = await fetch("/api/teaching/syllabus", {
+    const res = await safeFetch("/api/teaching/syllabus", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     })
-    if (res.ok) setResult(await res.json())
+    if (res) setResult(await res.json())
   }
 
   return (
@@ -80,7 +85,7 @@ function LearningPathTab() {
   const subjects = ["Mathematics", "Programming", "Physics", "English"]
 
   async function generate() {
-    const res = await fetch("/api/teaching/learning-path", {
+    const res = await safeFetch("/api/teaching/learning-path", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -89,7 +94,7 @@ function LearningPathTab() {
         completedTopics: form.completedTopics.split(",").map((t) => t.trim()).filter(Boolean),
       }),
     })
-    if (res.ok) setResult(await res.json())
+    if (res) setResult(await res.json())
   }
 
   return (
