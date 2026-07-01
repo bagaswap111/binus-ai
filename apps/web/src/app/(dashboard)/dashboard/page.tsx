@@ -66,7 +66,7 @@ export default function DashboardPage() {
           {quickLinks.map((link) => (
             <Link key={link.href} href={link.href}
               className={`${link.color} rounded-xl border p-4 hover:shadow-md transition-shadow`}>
-              <div className="text-2xl mb-2">{link.icon}</div>
+              <div className="text-2xl mb-2" aria-hidden="true">{link.icon}</div>
               <div className="text-sm font-medium text-foreground">{link.label}</div>
               <div className="text-xs text-muted-foreground mt-0.5">{link.desc}</div>
             </Link>
@@ -142,7 +142,7 @@ export default function DashboardPage() {
 function StatCard({ label, value, icon }: { label: string; value: string | number; icon: string }) {
   return (
     <div className="rounded-xl border bg-card p-4">
-      <div className="text-2xl mb-1">{icon}</div>
+      <div className="text-2xl mb-1" aria-hidden="true">{icon}</div>
       <div className="text-2xl font-bold text-foreground">{value}</div>
       <div className="text-xs text-muted-foreground">{label}</div>
     </div>

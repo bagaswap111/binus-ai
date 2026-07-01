@@ -4,6 +4,8 @@ import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { safeFetchJSON, safeFetch } from "@/lib/security"
+import { Button } from "@/components/ui/button"
+import Breadcrumb from "@/components/breadcrumb"
 
 interface Question {
   type: string
@@ -38,24 +40,25 @@ export default function ExamDetailPage() {
     safeFetchJSON<ExamDetail>(`/api/exams/${params.id}`).then((d) => d && setExam(d))
   }, [params.id])
 
-  if (!exam) return <div className="text-zinc-400 pt-10">Loading...</div>
+  if (!exam) return <div className="text-muted-foreground pt-10">Loading...</div>
 
   return (
     <div className="max-w-3xl">
+      <Breadcrumb items={[{ label: "Exams", href: "/exams" }, { label: exam?.title || "Loading..." }]} />
       <div className="mb-6">
         <h1 className="text-xl font-semibold">{exam.title}</h1>
-        <p className="text-sm text-zinc-500">{exam.subject.code} &middot; {exam.teacher.name} &middot; {exam.duration} min &middot; {exam.maxScore} pts</p>
-        {exam.description && <p className="mt-2 text-sm text-zinc-600">{exam.description}</p>}
+        <p className="text-sm text-muted-foreground">{exam.subject.code} &middot; {exam.teacher.name} &middot; {exam.duration} min &middot; {exam.maxScore} pts</p>
+        {exam.description && <p className="mt-2 text-sm text-muted-foreground">{exam.description}</p>}
         <div className="mt-2 flex gap-2">
-          <span className={`rounded-full px-2 py-0.5 text-xs ${exam.status === "PUBLISHED" ? "bg-green-100 text-green-700" : "bg-zinc-100 text-zinc-600"}`}>{exam.status}</span>
+          <span className={`rounded-full px-2 py-0.5 text-xs ${exam.status === "PUBLISHED" ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground"}`}><span aria-hidden="true">● </span>{exam.status}</span>
         </div>
       </div>
 
       {exam.myResult && exam.myResult.status === "GRADED" && (
         <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4">
           <p className="font-medium">Score: {exam.myResult.totalScore}/{exam.maxScore}</p>
-          <p className="text-sm text-zinc-600">Status: Graded</p>
-          <button onClick={() => router.push(`/exams/${params.id}/results`)} className="mt-2 text-sm text-blue-600 underline">View Results</button>
+          <p className="text-sm text-muted-foreground">Status: Graded</p>
+          <Button variant="link" onClick={() => router.push(`/exams/${params.id}/results`)}>View Results</Button>
         </div>
       )}
 
@@ -68,19 +71,19 @@ export default function ExamDetailPage() {
       <div className="space-y-4">
         {exam.questions.map((q, idx) => (
           <div key={idx} className="rounded-lg border p-4">
-            <div className="mb-1 text-xs text-zinc-500">Q{idx + 1} &middot; {q.type.replace("_", " ")} &middot; {q.maxScore} pts</div>
+            <div className="mb-1 text-xs text-muted-foreground">Q{idx + 1} &middot; {q.type.replace("_", " ")} &middot; {q.maxScore} pts</div>
             <p className="text-sm">{q.question}</p>
             {q.options && (
               <div className="mt-2 space-y-1">
                 {q.options.map((opt, oi) => (
-                  <div key={oi} className="text-sm text-zinc-600">{String.fromCharCode(97 + oi)}. {opt}</div>
+                  <div key={oi} className="text-sm text-muted-foreground">{String.fromCharCode(97 + oi)}. {opt}</div>
                 ))}
               </div>
             )}
             {exam.myResult?.answers?.[idx] && (
-              <div className="mt-2 rounded bg-zinc-50 p-2 text-xs">
+              <div className="mt-2 rounded bg-muted p-2 text-xs">
                 <p className="font-medium">Score: {exam.myResult.answers[idx].score ?? "pending"}</p>
-                {exam.myResult.answers[idx].feedback && <p className="text-zinc-500">{exam.myResult.answers[idx].feedback}</p>}
+                {exam.myResult.answers[idx].feedback && <p className="text-muted-foreground">{exam.myResult.answers[idx].feedback}</p>}
               </div>
             )}
           </div>
@@ -89,15 +92,15 @@ export default function ExamDetailPage() {
 
       <div className="mt-6 flex gap-3">
         {exam.status === "PUBLISHED" && !exam.myResult && (
-          <button onClick={() => router.push(`/exams/${params.id}/take`)} className="rounded-lg bg-zinc-900 px-6 py-2 text-sm text-white">
+          <Button onClick={() => router.push(`/exams/${params.id}/take`)}>
             Take Exam
-          </button>
+          </Button>
         )}
         {isTeacher && (
           <>
-            <button onClick={() => router.push(`/exams/${params.id}/results`)} className="rounded-lg border px-6 py-2 text-sm">
+            <Button variant="outline" onClick={() => router.push(`/exams/${params.id}/results`)}>
               View All Results
-            </button>
+            </Button>
             {exam.status === "DRAFT" && (
               <button onClick={async () => {
                 if (!confirm("Publish this exam? Students will be able to see and take it.")) return
@@ -112,25 +115,25 @@ export default function ExamDetailPage() {
               </button>
             )}
             {exam.status === "PUBLISHED" && (
-              <button onClick={async () => {
-                if (!confirm("Unpublish this exam? Students will no longer be able to access it.")) return
-                await safeFetch(`/api/exams/${params.id}`, {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ status: "DRAFT" }),
-                })
-                window.location.reload()
-              }} className="rounded-lg border border-yellow-400 px-6 py-2 text-sm text-yellow-700">
-                Unpublish
-              </button>
+            <Button variant="outline" onClick={async () => {
+              if (!confirm("Unpublish this exam? Students will no longer be able to access it.")) return
+              await safeFetch(`/api/exams/${params.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: "DRAFT" }),
+              })
+              window.location.reload()
+            }}>
+              Unpublish
+            </Button>
             )}
-            <button onClick={async () => {
+            <Button variant="destructive" onClick={async () => {
               if (!confirm("Delete this exam? This cannot be undone.")) return
               const res = await safeFetch(`/api/exams/${params.id}`, { method: "DELETE" })
               if (res) router.push("/exams")
-            }} className="rounded-lg border border-red-300 px-6 py-2 text-sm text-red-600">
+            }}>
               Delete
-            </button>
+            </Button>
           </>
         )}
       </div>

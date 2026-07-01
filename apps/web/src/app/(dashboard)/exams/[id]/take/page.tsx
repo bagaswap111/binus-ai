@@ -3,6 +3,8 @@
 import { useEffect, useState, useRef, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { safeFetchJSON, safeFetch } from "@/lib/security"
+import { Button } from "@/components/ui/button"
+import Breadcrumb from "@/components/breadcrumb"
 
 interface Question {
   type: string
@@ -103,8 +105,11 @@ export default function TakeExamPage() {
 
   async function handleSubmit() {
     if (submittedRef.current) return
+    const unanswered = exam?.questions.filter((_, i) => !answers[i]?.trim()).length ?? 0
+    if (unanswered > 0 && !confirm(`${unanswered} question(s) unanswered. Submit anyway?`)) return
     submittedRef.current = true
     setSubmitting(true)
+    if (!confirm("Submit your exam? This action cannot be undone.")) return
     const formatted = Object.entries(answers).map(([questionIndex, answer]) => ({
       questionIndex: Number(questionIndex),
       question: exam?.questions[Number(questionIndex)]?.question || "",
@@ -124,32 +129,33 @@ export default function TakeExamPage() {
     return `${m}:${sec.toString().padStart(2, "0")}`
   }
 
-  if (!exam) return <div className="text-zinc-400 pt-10">Loading...</div>
+  if (!exam) return <div className="text-muted-foreground pt-10">Loading...</div>
 
   return (
     <div className="max-w-3xl">
+      <Breadcrumb items={[{ label: "Exams", href: "/exams" }, { label: exam?.title || "Exam" }]} />
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold">{exam.title}</h1>
           {!fullscreen && <p className="text-xs text-red-500">Not in fullscreen mode — violations are being logged</p>}
         </div>
-        <div className={`text-lg font-mono font-bold ${timeLeft < 300 ? "text-red-500" : "text-zinc-700"}`}>
+        <div role="timer" aria-live="polite" aria-label="Time remaining" className={`text-lg font-mono font-bold ${timeLeft < 300 ? "text-red-500" : "text-muted-foreground"}`}>
           {formatTime(timeLeft)}
         </div>
       </div>
 
-      {exam.instructions && <p className="mb-6 text-sm text-zinc-600 italic">{exam.instructions}</p>}
+      {exam.instructions && <p className="mb-6 text-sm text-muted-foreground italic">{exam.instructions}</p>}
 
       <div className="space-y-6">
         {exam.questions.map((q, idx) => (
           <div key={idx} className="rounded-lg border p-4">
-            <div className="mb-1 text-xs text-zinc-500">Q{idx + 1} &middot; {q.type.replace("_", " ")} &middot; {q.maxScore} pts</div>
+            <div className="mb-1 text-xs text-muted-foreground">Q{idx + 1} &middot; {q.type.replace("_", " ")} &middot; {q.maxScore} pts</div>
             <p className="mb-3 text-sm font-medium">{q.question}</p>
 
             {q.type === "multiple_choice" && q.options && (
               <div className="space-y-2">
                 {q.options.map((opt, oi) => (
-                  <label key={oi} className="flex cursor-pointer items-center gap-2 rounded border p-2 text-sm hover:bg-zinc-50">
+                  <label key={oi} className="flex cursor-pointer items-center gap-2 rounded border p-2 text-sm hover:bg-accent">
                     <input
                       type="radio"
                       name={`q-${idx}`}
@@ -167,7 +173,7 @@ export default function TakeExamPage() {
                 value={answers[idx] || ""}
                 onChange={(e) => setAnswers({ ...answers, [idx]: e.target.value })}
                 rows={5}
-                className="w-full rounded-lg border px-4 py-2 text-sm outline-none focus:border-zinc-400"
+                className="w-full rounded-lg border px-4 py-2 text-sm outline-none focus:border-ring"
                 placeholder="Write your answer..."
               />
             )}
@@ -176,7 +182,7 @@ export default function TakeExamPage() {
               <input
                 value={answers[idx] || ""}
                 onChange={(e) => setAnswers({ ...answers, [idx]: e.target.value })}
-                className="w-full rounded-lg border px-4 py-2 text-sm outline-none focus:border-zinc-400"
+                className="w-full rounded-lg border px-4 py-2 text-sm outline-none focus:border-ring"
                 placeholder="Your answer"
               />
             )}
@@ -184,13 +190,13 @@ export default function TakeExamPage() {
         ))}
       </div>
 
-      <button
+      <Button
         onClick={handleSubmit}
         disabled={submitting}
-        className="mt-6 rounded-lg bg-zinc-900 px-6 py-2 text-sm text-white disabled:opacity-50"
+        className="mt-6"
       >
         {submitting ? "Submitting..." : "Submit Exam"}
-      </button>
+      </Button>
     </div>
   )
 }

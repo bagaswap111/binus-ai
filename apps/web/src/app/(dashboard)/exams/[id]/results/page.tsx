@@ -4,6 +4,8 @@ import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { safeFetchJSON, safeFetch } from "@/lib/security"
+import { Button } from "@/components/ui/button"
+import Breadcrumb from "@/components/breadcrumb"
 
 interface ExamResult {
   id: string
@@ -58,26 +60,27 @@ export default function ExamResultsPage() {
     window.location.reload()
   }
 
-  if (!exam) return <div className="text-zinc-400 pt-10">Loading...</div>
+  if (!exam) return <div className="text-muted-foreground pt-10">Loading...</div>
 
   // student view: show my own result
   if (!isTeacher && results.length === 1) {
     const r = results[0]
     return (
       <div className="max-w-3xl">
+        <Breadcrumb items={[{ label: "Exams", href: "/exams" }, { label: exam?.title || "Exam", href: `/exams/${params.id}` }, { label: "Results" }]} />
         <h1 className="mb-2 text-xl font-semibold">{exam.title} — Results</h1>
         <div className="mb-6 rounded-lg border p-4">
           <p className="text-lg font-bold">{r.totalScore ?? "Pending"}/{exam.maxScore}</p>
-          <p className="text-sm text-zinc-500">Status: {r.status}</p>
+          <p className="text-sm text-muted-foreground">Status: {r.status}</p>
         </div>
         <div className="space-y-4">
           {r.answers?.map((a, idx) => (
             <div key={idx} className="rounded-lg border p-4">
-              <p className="mb-1 text-xs text-zinc-500">Q{idx + 1}</p>
+              <p className="mb-1 text-xs text-muted-foreground">Q{idx + 1}</p>
               <p className="mb-2 text-sm font-medium">{a.question}</p>
               <p className="mb-1 text-sm"><span className="font-medium">Your answer:</span> {a.answer}</p>
               {a.score !== undefined && <p className="text-sm">Score: {a.score}/{exam.questions[idx]?.maxScore}</p>}
-              {a.feedback && <p className="text-sm text-zinc-500">Feedback: {a.feedback}</p>}
+              {a.feedback && <p className="text-sm text-muted-foreground">Feedback: {a.feedback}</p>}
             </div>
           ))}
         </div>
@@ -88,21 +91,22 @@ export default function ExamResultsPage() {
   // teacher view: all results
   return (
     <div className="max-w-5xl">
+      <Breadcrumb items={[{ label: "Exams", href: "/exams" }, { label: exam?.title || "Exam", href: `/exams/${params.id}` }, { label: "Results" }]} />
       <h1 className="mb-6 text-xl font-semibold">{exam.title} — All Results</h1>
 
-      {results.length === 0 && <p className="text-zinc-400">No submissions yet</p>}
+      {results.length === 0 && <p className="text-muted-foreground">No submissions yet</p>}
 
       {results.some((r) => r.status === "SUBMITTED") && (
-        <button onClick={async () => {
+        <Button onClick={async () => {
           for (const r of results.filter((r) => r.status === "SUBMITTED")) {
             await safeFetch(`/api/exams/${params.id}/auto-grade`, {
               method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resultId: r.id }),
             })
           }
           window.location.reload()
-        }} className="mb-4 rounded-lg bg-zinc-900 px-4 py-2 text-sm text-white">
+        }} className="mb-4">
           Grade All Pending
-        </button>
+        </Button>
       )}
 
       <div className="space-y-4">
@@ -111,15 +115,15 @@ export default function ExamResultsPage() {
             <div className="mb-2 flex items-center justify-between">
               <div>
                 <p className="font-medium">{r.student.name}</p>
-                <p className="text-xs text-zinc-500">{r.student.email} &middot; {r.status} {r.submittedAt && `· ${new Date(r.submittedAt).toLocaleDateString()}`}</p>
+                <p className="text-xs text-muted-foreground">{r.student.email} &middot; {r.status} {r.submittedAt && `· ${new Date(r.submittedAt).toLocaleDateString()}`}</p>
               </div>
               <div className="flex items-center gap-3">
                 {r.totalScore !== null && <span className="font-bold">{r.totalScore}/{exam.maxScore}</span>}
-                {r.flagged && <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-700">{r.flagReason || "Flagged"}</span>}
+                {r.flagged && <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-700"><span aria-hidden="true">● </span>{r.flagReason || "Flagged"}</span>}
                 {r.status === "SUBMITTED" && (
-                  <button onClick={() => autoGrade(r.id)} className="rounded-lg bg-zinc-800 px-3 py-1 text-xs text-white">
+                  <Button variant="secondary" size="sm" onClick={() => autoGrade(r.id)}>
                     Auto-grade
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -135,14 +139,14 @@ export default function ExamResultsPage() {
           )}
           {r.answers && (
               <details>
-                <summary className="cursor-pointer text-sm text-zinc-500">Show answers ({r.answers.length} questions)</summary>
+                <summary className="cursor-pointer text-sm text-muted-foreground">Show answers ({r.answers.length} questions)</summary>
                 <div className="mt-2 space-y-2">
                   {r.answers.map((a, idx) => (
-                    <div key={idx} className="rounded bg-zinc-50 p-2 text-sm">
-                      <p className="text-xs text-zinc-400">Q{idx + 1}: {a.question}</p>
+                    <div key={idx} className="rounded bg-muted p-2 text-sm">
+                      <p className="text-xs text-muted-foreground">Q{idx + 1}: {a.question}</p>
                       <p className="font-medium">{a.answer}</p>
-                      {a.score !== undefined && <p className="text-xs text-zinc-500">Score: {a.score}/{exam.questions[idx]?.maxScore}</p>}
-                      {a.feedback && <p className="text-xs text-zinc-400">Feedback: {a.feedback}</p>}
+                      {a.score !== undefined && <p className="text-xs text-muted-foreground">Score: {a.score}/{exam.questions[idx]?.maxScore}</p>}
+                      {a.feedback && <p className="text-xs text-muted-foreground">Feedback: {a.feedback}</p>}
                     </div>
                   ))}
                 </div>

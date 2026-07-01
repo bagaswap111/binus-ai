@@ -27,11 +27,11 @@ export default function SubjectsPage() {
           <button
             key={s.id}
             onClick={() => router.push(`/chat?subject=${s.id}`)}
-            className="rounded-lg border p-4 text-left hover:border-zinc-400"
+            className="rounded-lg border p-4 text-left hover:border-ring"
           >
             <div className="text-sm font-medium">{s.name}</div>
-            <div className="mt-1 text-xs text-zinc-500">{s.code}</div>
-            {s.description && <div className="mt-1 text-xs text-zinc-400">{s.description}</div>}
+            <div className="mt-1 text-xs text-muted-foreground">{s.code}</div>
+            {s.description && <div className="mt-1 text-xs text-muted-foreground">{s.description}</div>}
           </button>
         ))}
       </div>

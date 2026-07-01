@@ -105,7 +105,7 @@ function CareerRecommender() {
             </div>
           ))}
         </div>
-        <button onClick={handleSubmit} disabled={loading}
+        <button onClick={handleSubmit} disabled={loading || !interests}
           className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50">
           {loading ? "Menganalisis..." : "Cari Rekomendasi Karir"}
         </button>
@@ -165,7 +165,7 @@ function UniversityMatcher() {
         <h2 className="text-lg font-semibold text-foreground">Cari Universitas</h2>
         <div className="grid gap-3 sm:grid-cols-3">
           <div>
-            <label className="text-sm text-muted-foreground">IPK / Rata-rata nilai</label>
+            <label className="text-sm text-muted-foreground" title="Grade Point Average">IPK / Rata-rata nilai</label>
             <input type="number" step="0.1" min="0" max="4" value={gpa} onChange={(e) => setGpa(e.target.value)}
               className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-ring" />
           </div>
@@ -186,7 +186,7 @@ function UniversityMatcher() {
             </select>
           </div>
         </div>
-        <button onClick={handleSubmit} disabled={loading}
+        <button onClick={handleSubmit} disabled={loading || !major}
           className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50">
           {loading ? "Mencari..." : "Cari Universitas"}
         </button>
@@ -209,7 +209,7 @@ function UniversityMatcher() {
               <div className="mt-2 flex flex-wrap gap-1">
                 {u.majors.slice(0, 4).map((m: string) => (
                   <span key={m} className={`rounded-full px-2 py-0.5 text-xs ${String(m).toLowerCase().includes(major.toLowerCase()) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-                    {m}
+                    <span aria-hidden="true">● </span>{m}
                   </span>
                 ))}
               </div>

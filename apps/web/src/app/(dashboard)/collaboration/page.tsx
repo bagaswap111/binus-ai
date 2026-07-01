@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { safeFetchJSON, safeFetch } from "@/lib/security"
+import { Button } from "@/components/ui/button"
 
 export default function CollaborationPage() {
   const [tab, setTab] = useState("groups")
@@ -70,13 +71,13 @@ function GroupsTab() {
   return (
     <div className="flex gap-4">
       <aside className="w-64 shrink-0">
-        <button onClick={() => setShowForm(!showForm)} className="mb-3 w-full rounded-md bg-zinc-900 px-3 py-2 text-sm text-white">
+        <Button onClick={() => setShowForm(!showForm)} className="mb-3 w-full">
           + New Group
-        </button>
+        </Button>
         {showForm && (
           <div className="mb-3 space-y-2 rounded border p-3">
             <input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Group name" className="w-full rounded border px-3 py-1.5 text-sm outline-none" />
-            <button onClick={createGroup} disabled={!formName} className="w-full rounded bg-zinc-800 py-1.5 text-sm text-white disabled:opacity-50">Create</button>
+            <Button variant="secondary" onClick={createGroup} disabled={!formName} className="w-full">Create</Button>
           </div>
         )}
         <div className="space-y-1">
@@ -99,20 +100,20 @@ function GroupsTab() {
                 <div key={m.id} className="rounded-lg border p-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium">{m.user.name}</span>
-                    <span className="text-xs text-zinc-400">{new Date(m.createdAt).toLocaleTimeString()}</span>
+                    <span className="text-xs text-muted-foreground">{new Date(m.createdAt).toLocaleTimeString()}</span>
                   </div>
                   <p className="mt-1 text-sm">{m.content}</p>
                 </div>
               ))}
-              {messages.length === 0 && <p className="text-center text-sm text-zinc-400 pt-10">No messages yet</p>}
+              {messages.length === 0 && <p className="text-center text-sm text-muted-foreground pt-10">No messages yet</p>}
             </div>
             <div className="flex gap-2 border-t pt-3">
               <input value={newMsg} onChange={(e) => setNewMsg(e.target.value)} placeholder="Type a message..." className="flex-1 rounded-lg border px-4 py-2 text-sm outline-none" />
-              <button onClick={sendMessage} disabled={!newMsg.trim()} className="rounded-lg bg-zinc-900 px-4 py-2 text-sm text-white disabled:opacity-50">Send</button>
+              <Button onClick={sendMessage} disabled={!newMsg.trim()}>Send</Button>
             </div>
           </>
         ) : (
-          <div className="flex items-center justify-center pt-20 text-zinc-400">Select a group to start chatting</div>
+          <div className="flex items-center justify-center pt-20 text-muted-foreground">Select a group to start chatting</div>
         )}
       </div>
     </div>
@@ -163,13 +164,13 @@ function ForumsTab() {
   return (
     <div className="flex gap-4">
       <aside className="w-64 shrink-0">
-        <button onClick={() => setShowForm(!showForm)} className="mb-3 w-full rounded-md bg-zinc-900 px-3 py-2 text-sm text-white">
+        <Button onClick={() => setShowForm(!showForm)} className="mb-3 w-full">
           + New Forum
-        </button>
+        </Button>
         {showForm && (
           <div className="mb-3 space-y-2 rounded border p-3">
             <input value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="Forum title" className="w-full rounded border px-3 py-1.5 text-sm outline-none" />
-            <button onClick={createForum} disabled={!formTitle} className="w-full rounded bg-zinc-800 py-1.5 text-sm text-white disabled:opacity-50">Create</button>
+            <Button variant="secondary" onClick={createForum} disabled={!formTitle} className="w-full">Create</Button>
           </div>
         )}
         <div className="space-y-1">
@@ -192,21 +193,21 @@ function ForumsTab() {
                 <div key={p.id} className={`rounded-lg border p-3 ${p.isFlagged ? "border-red-200 bg-red-50" : ""}`}>
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium">{p.user.name}</span>
-                    <span className="text-xs text-zinc-400">{new Date(p.createdAt).toLocaleDateString()}</span>
+                    <span className="text-xs text-muted-foreground">{new Date(p.createdAt).toLocaleDateString()}</span>
                   </div>
                   <p className="mt-1 text-sm">{p.content}</p>
                   {p.isFlagged && <p className="mt-1 text-xs text-red-500">Flagged: {p.flagReason}</p>}
                 </div>
               ))}
-              {posts.length === 0 && <p className="text-center text-sm text-zinc-400 pt-10">No posts yet</p>}
+              {posts.length === 0 && <p className="text-center text-sm text-muted-foreground pt-10">No posts yet</p>}
             </div>
             <div className="flex gap-2 border-t pt-3">
               <input value={newPost} onChange={(e) => setNewPost(e.target.value)} placeholder="Write a post (min 20 chars)" className="flex-1 rounded-lg border px-4 py-2 text-sm outline-none" />
-              <button onClick={createPost} disabled={!newPost.trim()} className="rounded-lg bg-zinc-900 px-4 py-2 text-sm text-white disabled:opacity-50">Post</button>
+              <Button onClick={createPost} disabled={!newPost.trim()}>Post</Button>
             </div>
           </>
         ) : (
-          <div className="flex items-center justify-center pt-20 text-zinc-400">Select a forum</div>
+          <div className="flex items-center justify-center pt-20 text-muted-foreground">Select a forum</div>
         )}
       </div>
     </div>

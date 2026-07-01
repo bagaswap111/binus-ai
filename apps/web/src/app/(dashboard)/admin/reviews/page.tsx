@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { safeFetchJSON, safeFetch } from "@/lib/security"
+import Breadcrumb from "@/components/breadcrumb"
 
 export default function ReviewsPage() {
   const [reviews, setReviews] = useState<any[]>([])
@@ -40,21 +41,18 @@ export default function ReviewsPage() {
 
   return (
     <div className="space-y-6">
+      <Breadcrumb items={[{ label: "Admin", href: "/admin" }, { label: "Content Review Queue" }]} />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-foreground">Content Review Queue</h1>
-        <div className="flex gap-2" role="tablist" aria-label="Review status">
+        <div className="tab-list" role="tablist" aria-label="Review status">
           {["PENDING", "APPROVED", "REJECTED"].map((s) => (
             <button key={s} onClick={() => setTab(s)}
-              className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
-                tab === s
-                  ? "bg-foreground text-background"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
-              }`}
+              className={`tab ${tab === s ? "tab-active" : ""}`}
               role="tab"
               aria-selected={tab === s}
               aria-controls={`panel-${s}`}
               id={`tab-${s}`}
-            >{s === "PENDING" ? "⏳ Pending" : s === "APPROVED" ? "✅ Approved" : "❌ Rejected"}</button>
+            >{s === "PENDING" ? <><span aria-hidden="true">⏳</span> Pending</> : s === "APPROVED" ? <><span aria-hidden="true">✅</span> Approved</> : <><span aria-hidden="true">❌</span> Rejected</>}</button>
           ))}
         </div>
       </div>
@@ -63,20 +61,20 @@ export default function ReviewsPage() {
       {loading ? (
         <p className="text-muted-foreground">Loading...</p>
       ) : reviews.length === 0 ? (
-        <p className="text-muted-foreground">Tidak ada review dengan status {tab.toLowerCase()}.</p>
+        <p className="text-muted-foreground">No {tab.toLowerCase()} reviews.</p>
       ) : (
         <div className="space-y-3">
           {reviews.map((r) => (
-            <div key={r.id} className="rounded-xl border p-4">
+            <div key={r.id} className="rounded-lg border p-4">
               <div className="flex items-start justify-between mb-3">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${levelColor(r.classification)}`}>
-                      {r.classification}
+                      <span aria-hidden="true">● </span>{r.classification}
                     </span>
                     {r.category && (
                       <span className="px-2 py-0.5 rounded-full bg-muted text-xs text-muted-foreground">
-                        {r.category}
+                        <span aria-hidden="true">● </span>{r.category}
                       </span>
                     )}
                     <span className="text-xs text-muted-foreground">
@@ -93,7 +91,7 @@ export default function ReviewsPage() {
               {tab === "PENDING" && (
                 <div className="flex items-center gap-2">
                   <label htmlFor={`note-${r.id}`} className="sr-only">Reviewer Note</label>
-                  <input id={`note-${r.id}`} placeholder="Catatan (opsional)"
+                  <input id={`note-${r.id}`} placeholder="Note (optional)"
                     className="flex-1 px-3 py-1.5 text-sm rounded-lg border bg-background text-foreground" />
                   <button onClick={() => {
                     const note = (document.getElementById(`note-${r.id}`) as HTMLInputElement).value
@@ -109,7 +107,7 @@ export default function ReviewsPage() {
               )}
               {tab !== "PENDING" && r.reviewerNote && (
                 <div className="text-xs text-muted-foreground mt-2">
-                  Catatan: {r.reviewerNote}
+                  Note: {r.reviewerNote}
                 </div>
               )}
             </div>

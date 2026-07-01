@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { safeFetchJSON, safeFetch } from "@/lib/security"
+import { Button } from "@/components/ui/button"
 
 interface QBQuestion {
   id: string
@@ -21,18 +22,28 @@ const BLOOM_LEVELS = ["C1 (Remember)", "C2 (Understand)", "C3 (Apply)", "C4 (Ana
 export default function QuestionsPage() {
   const [questions, setQuestions] = useState<QBQuestion[]>([])
   const [showForm, setShowForm] = useState(false)
+  const [search, setSearch] = useState("")
+  const [page, setPage] = useState(1)
+  const perPage = 20
 
   useEffect(() => {
     safeFetchJSON<QBQuestion[]>("/api/questions").then((d) => d && setQuestions(d))
   }, [])
 
+  const filtered = questions.filter((q) => !search || q.question.toLowerCase().includes(search.toLowerCase()) || (q.tags && q.tags.some((t) => t.toLowerCase().includes(search.toLowerCase()))))
+  const totalPages = Math.ceil(filtered.length / perPage)
+  const paged = filtered.slice((page - 1) * perPage, page * perPage)
+
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-xl font-semibold">Question Bank</h1>
-        <button onClick={() => setShowForm(!showForm)} className="rounded-lg bg-zinc-900 px-4 py-2 text-sm text-white">
-          {showForm ? "Cancel" : "+ New Question"}
-        </button>
+        <div className="flex items-center gap-3">
+          <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} placeholder="Search questions..." className="rounded-lg border px-3 py-1.5 text-sm outline-none focus:border-ring w-48" />
+          <Button onClick={() => setShowForm(!showForm)}>
+            {showForm ? "Cancel" : "+ New Question"}
+          </Button>
+        </div>
       </div>
 
       {showForm && <QuestionForm onDone={() => { setShowForm(false); safeFetchJSON<QBQuestion[]>("/api/questions").then((d) => d && setQuestions(d)) }} />}
@@ -40,8 +51,8 @@ export default function QuestionsPage() {
       <div className="space-y-3">
         {questions.map((q) => (
           <div key={q.id} className="rounded-lg border p-4">
-            <div className="mb-1 flex items-center gap-2 text-xs text-zinc-500">
-              <span className="rounded bg-zinc-100 px-1.5 py-0.5">{q.type.replace("_", " ")}</span>
+            <div className="mb-1 flex items-center gap-2 text-xs text-muted-foreground">
+              <span className="rounded bg-muted px-1.5 py-0.5">{q.type.replace("_", " ")}</span>
               {q.bloomLevel && <span className="rounded bg-blue-100 px-1.5 py-0.5 text-blue-700">{q.bloomLevel}</span>}
               {q.difficulty && <span className="rounded bg-orange-100 px-1.5 py-0.5 text-orange-700">{q.difficulty}</span>}
               <span>{q.subject.code}</span>
@@ -50,19 +61,29 @@ export default function QuestionsPage() {
             <p className="text-sm">{q.question}</p>
             <div className="mt-1 flex flex-wrap gap-1">
               {q.tags.map((t) => (
-                <span key={t} className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-500">{t}</span>
+                <span key={t} className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">{t}</span>
               ))}
             </div>
           </div>
         ))}
-        {questions.length === 0 && <p className="pt-10 text-center text-zinc-400">No questions yet</p>}
+        {paged.length === 0 && <p className="pt-10 text-center text-muted-foreground">{search ? "No questions match your search" : "No questions yet"}</p>}
       </div>
+
+      {totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-center gap-2">
+          <button onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1} className="rounded-lg border px-3 py-1.5 text-sm disabled:opacity-50">Previous</button>
+          <span className="text-sm text-muted-foreground">Page {page} of {totalPages}</span>
+          <button onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages} className="rounded-lg border px-3 py-1.5 text-sm disabled:opacity-50">Next</button>
+        </div>
+      )}
     </div>
   )
 }
 
 function QuestionForm({ onDone }: { onDone: () => void }) {
   const [subjects, setSubjects] = useState<Array<{ id: string; name: string; code: string }>>([])
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState("")
   const [form, setForm] = useState({
     subjectId: "", type: "essay", question: "", options: ["", "", "", ""], answer: "",
     maxScore: 10, bloomLevel: "", tags: "", difficulty: "",
@@ -71,7 +92,10 @@ function QuestionForm({ onDone }: { onDone: () => void }) {
   useEffect(() => { safeFetchJSON<{ id: string; name: string; code: string }[]>("/api/subjects").then((d) => d && setSubjects(d)) }, [])
 
   async function handleSubmit() {
-    await fetch("/api/questions", {
+    if (submitting) return
+    setSubmitting(true)
+    setError("")
+    const res = await safeFetch("/api/questions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -80,13 +104,15 @@ function QuestionForm({ onDone }: { onDone: () => void }) {
         options: form.type === "multiple_choice" ? form.options : null,
       }),
     })
-    onDone()
+    setSubmitting(false)
+    if (res) onDone()
+    else setError("Failed to save question. Please try again.")
   }
 
   return (
     <div className="mb-6 rounded-lg border p-4 space-y-3">
       <div className="flex gap-3">
-          <label htmlFor="q-subject" className="sr-only">Subject</label>
+          <label htmlFor="q-subject" className="sr-only">Subject *</label>
           <select id="q-subject" value={form.subjectId} onChange={(e) => setForm({ ...form, subjectId: e.target.value })} className="flex-1">
           <option value="">Subject</option>
           {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -110,9 +136,10 @@ function QuestionForm({ onDone }: { onDone: () => void }) {
           <option value="hard">Hard</option>
         </select>
         <label htmlFor="q-score" className="sr-only">Max Score</label>
-        <input id="q-score" type="number" value={form.maxScore} onChange={(e) => setForm({ ...form, maxScore: Number(e.target.value) })} className="w-20 rounded border px-3 py-1.5 text-sm outline-none" placeholder="Score" />
+        <input id="q-score" type="number" value={form.maxScore} onChange={(e) => setForm({ ...form, maxScore: Number(e.target.value) })} min={1} max={1000} className="w-20 rounded border px-3 py-1.5 text-sm outline-none" placeholder="Score" />
       </div>
-      <label htmlFor="q-text" className="sr-only">Question</label>
+      {error && <p className="text-sm text-red-500">{error}</p>}
+      <label htmlFor="q-text" className="sr-only">Question *</label>
       <textarea id="q-text" value={form.question} onChange={(e) => setForm({ ...form, question: e.target.value })} className="w-full rounded border px-3 py-1.5 text-sm outline-none" rows={2} placeholder="Question" />
       {form.type === "multiple_choice" && form.options.map((opt, i) => (
         <div key={i} className="flex items-center gap-2">
@@ -129,7 +156,7 @@ function QuestionForm({ onDone }: { onDone: () => void }) {
       </>)}
       <label htmlFor="q-tags" className="sr-only">Tags</label>
       <input id="q-tags" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} className="w-full rounded border px-3 py-1.5 text-sm outline-none" placeholder="Tags (comma-separated)" />
-      <button onClick={handleSubmit} disabled={!form.subjectId || !form.question} className="rounded-lg bg-zinc-900 px-4 py-2 text-sm text-white disabled:opacity-50">Save</button>
+      <Button onClick={handleSubmit} disabled={submitting || !form.subjectId || !form.question}>{submitting ? "Saving..." : "Save"}</Button>
     </div>
   )
 }

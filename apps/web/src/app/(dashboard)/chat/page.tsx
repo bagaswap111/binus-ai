@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useSession } from "next-auth/react"
 import { safeFetch } from "@/lib/security"
+import { Button } from "@/components/ui/button"
 
 interface Message {
   id: string
@@ -24,6 +25,7 @@ export default function ChatPage() {
   const [sessions, setSessions] = useState<Session[]>([])
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { fetchSessions() }, [])
 
@@ -43,8 +45,8 @@ export default function ChatPage() {
     }
   }
 
-  async function sendMessage(e: React.FormEvent) {
-    e.preventDefault()
+  async function sendMessage(e?: React.FormEvent | React.KeyboardEvent) {
+    e?.preventDefault()
     if (!input.trim() || loading) return
     setLoading(true)
     const userMsg = input
@@ -74,17 +76,33 @@ export default function ChatPage() {
   }
 
   async function newChat() {
+    if (sessions.length > 0 && messages.length > 0 && !confirm("Start a new chat? Current conversation will be lost.")) return
     setCurrentSessionId(null)
     setMessages([])
+  }
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") { e.preventDefault(); inputRef.current?.focus() }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [])
+
+  async function handleKeyDown(e: React.KeyboardEvent) {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && !e.shiftKey) {
+      await sendMessage(e)
+    }
   }
 
   return (
     <div className="flex h-[calc(100vh-3rem)] gap-4">
       {/* sidebar sessions */}
       <aside className="w-60 shrink-0 overflow-y-auto border-r pr-2">
-        <button onClick={newChat} className="mb-3 w-full rounded-md bg-zinc-900 px-3 py-2 text-sm text-white">
+        <h1 className="mb-2 text-lg font-semibold">Chat</h1>
+        <Button onClick={newChat} className="mb-3 w-full">
           + New Chat
-        </button>
+        </Button>
         {sessions.map((s) => (
           <button
             key={s.id}
@@ -100,7 +118,7 @@ export default function ChatPage() {
       <div className="flex flex-1 flex-col">
         <div className="flex-1 overflow-y-auto space-y-4 pb-4">
           {messages.length === 0 && (
-            <div className="flex items-center justify-center pt-20 text-zinc-400">
+            <div className="flex items-center justify-center pt-20 text-muted-foreground">
               Start a conversation
             </div>
           )}
@@ -110,7 +128,7 @@ export default function ChatPage() {
                 className={`max-w-[70%] rounded-2xl px-4 py-2 text-sm ${
                   m.role === "user"
                     ? "bg-zinc-900 text-white"
-                    : "bg-zinc-100 text-zinc-900"
+                    : "bg-muted text-foreground"
                 }`}
               >
                 {m.content}
@@ -119,7 +137,7 @@ export default function ChatPage() {
           ))}
           {loading && (
             <div className="flex justify-start">
-              <div className="max-w-[70%] rounded-2xl bg-zinc-100 px-4 py-2 text-sm text-zinc-500">
+              <div className="max-w-[70%] rounded-2xl bg-muted px-4 py-2 text-sm text-muted-foreground">
                 Thinking...
               </div>
             </div>
@@ -133,15 +151,17 @@ export default function ChatPage() {
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type a message..."
             disabled={loading}
-            className="flex-1 rounded-lg border px-4 py-2 text-sm outline-none focus:border-zinc-400"
+            maxLength={5000}
+            onKeyDown={handleKeyDown}
+            ref={inputRef}
+            className="flex-1 rounded-lg border px-4 py-2 text-sm outline-none focus:border-ring"
           />
-          <button
+          <Button
             type="submit"
             disabled={loading || !input.trim()}
-            className="rounded-lg bg-zinc-900 px-4 py-2 text-sm text-white disabled:opacity-50"
           >
             Send
-          </button>
+          </Button>
         </form>
       </div>
     </div>

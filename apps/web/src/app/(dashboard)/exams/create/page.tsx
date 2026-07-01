@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { safeFetchJSON, safeFetch } from "@/lib/security"
+import { Button } from "@/components/ui/button"
+import Breadcrumb from "@/components/breadcrumb"
 
 interface Subject {
   id: string
@@ -30,13 +32,16 @@ export default function CreateExamPage() {
   const [maxScore, setMaxScore] = useState(100)
   const [passingScore, setPassingScore] = useState(0)
   const [questions, setQuestions] = useState<Question[]>([])
+  const [isDirty, setIsDirty] = useState(false)
+  const [error, setError] = useState("")
 
   // ponytail: warn on navigate away with unsaved form data
   useEffect(() => {
+    if (!isDirty) return
     const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = "" }
     window.addEventListener("beforeunload", handler)
     return () => window.removeEventListener("beforeunload", handler)
-  }, [])
+  }, [isDirty])
 
   useEffect(() => {
     safeFetchJSON<Subject[]>("/api/subjects").then((d) => d && setSubjects(d))
@@ -51,10 +56,12 @@ export default function CreateExamPage() {
   }
 
   function removeQuestion(idx: number) {
+    if (!confirm(`Remove Q${idx + 1}?`)) return
     setQuestions(questions.filter((_, i) => i !== idx))
   }
 
   async function handleSubmit() {
+    setError("")
     const res = await safeFetch("/api/exams", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -63,50 +70,54 @@ export default function CreateExamPage() {
     if (res) {
       const exam = await res.json()
       router.push(`/exams/${exam.id}`)
+    } else {
+      setError("Failed to create exam. Please try again.")
     }
   }
 
   return (
     <div className="max-w-3xl">
+      <Breadcrumb items={[{ label: "Exams", href: "/exams" }, { label: "Create Exam" }]} />
       <h1 className="mb-6 text-xl font-semibold">Create Exam</h1>
 
-      <div className="space-y-4">
-        <label htmlFor="exam-title" className="sr-only">Exam Title</label>
-        <input id="exam-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Exam title" className="w-full rounded-lg border px-4 py-2 text-sm outline-none focus:border-zinc-400" />
+      <div className="space-y-6">
+        {error && <p className="text-sm text-red-500">{error}</p>}
+        <label htmlFor="exam-title" className="sr-only">Exam Title *</label>
+          <input id="exam-title" value={title} onChange={(e) => { setTitle(e.target.value); setIsDirty(true) }} placeholder="Exam title" maxLength={200} className="w-full rounded-lg border px-4 py-2 text-sm outline-none focus:border-ring" />
         <label htmlFor="exam-desc" className="sr-only">Description</label>
-        <textarea id="exam-desc" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description (optional)" className="w-full rounded-lg border px-4 py-2 text-sm outline-none focus:border-zinc-400" rows={2} />
+        <textarea id="exam-desc" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description (optional)" maxLength={2000} className="w-full rounded-lg border px-4 py-2 text-sm outline-none focus:border-ring" rows={2} />
         <label htmlFor="exam-instr" className="sr-only">Instructions</label>
-        <textarea id="exam-instr" value={instructions} onChange={(e) => setInstructions(e.target.value)} placeholder="Instructions (optional)" className="w-full rounded-lg border px-4 py-2 text-sm outline-none focus:border-zinc-400" rows={2} />
+        <textarea id="exam-instr" value={instructions} onChange={(e) => setInstructions(e.target.value)} placeholder="Instructions (optional)" maxLength={2000} className="w-full rounded-lg border px-4 py-2 text-sm outline-none focus:border-ring" rows={2} />
 
         <div className="flex gap-4">
-          <label htmlFor="exam-subject" className="sr-only">Subject</label>
+          <label htmlFor="exam-subject" className="sr-only">Subject *</label>
           <select id="exam-subject" value={subjectId} onChange={(e) => setSubjectId(e.target.value)} className="flex-1">
             <option value="">Select subject</option>
             {subjects.map((s) => <option key={s.id} value={s.id}>{s.name} ({s.code})</option>)}
           </select>
           <label htmlFor="exam-duration" className="sr-only">Duration (minutes)</label>
-          <input id="exam-duration" type="number" value={duration} onChange={(e) => setDuration(Number(e.target.value))} placeholder="Duration (min)" className="w-32 rounded-lg border px-4 py-2 text-sm outline-none focus:border-zinc-400" />
+          <input id="exam-duration" type="number" value={duration} onChange={(e) => setDuration(Number(e.target.value))} placeholder="Duration (min)" min={1} max={480} className="w-32 rounded-lg border px-4 py-2 text-sm outline-none focus:border-ring" />
           <label htmlFor="exam-maxscore" className="sr-only">Max Score</label>
-          <input id="exam-maxscore" type="number" value={maxScore} onChange={(e) => setMaxScore(Number(e.target.value))} placeholder="Max score" className="w-28 rounded-lg border px-4 py-2 text-sm outline-none focus:border-zinc-400" />
+          <input id="exam-maxscore" type="number" value={maxScore} onChange={(e) => setMaxScore(Number(e.target.value))} placeholder="Max score" min={1} max={1000} className="w-28 rounded-lg border px-4 py-2 text-sm outline-none focus:border-ring" />
           <label htmlFor="exam-passing" className="sr-only">Passing Score</label>
-          <input id="exam-passing" type="number" value={passingScore} onChange={(e) => setPassingScore(Number(e.target.value))} placeholder="Passing score" className="w-28 rounded-lg border px-4 py-2 text-sm outline-none focus:border-zinc-400" />
+          <input id="exam-passing" type="number" value={passingScore} onChange={(e) => setPassingScore(Number(e.target.value))} placeholder="Passing score" min={0} max={1000} className="w-28 rounded-lg border px-4 py-2 text-sm outline-none focus:border-ring" />
         </div>
 
         <div className="space-y-3">
           <div className="flex gap-2">
-            <button onClick={() => addQuestion("essay")} className="rounded-lg bg-zinc-800 px-3 py-1.5 text-xs text-white">+ Essay</button>
-            <button onClick={() => addQuestion("multiple_choice")} className="rounded-lg bg-zinc-800 px-3 py-1.5 text-xs text-white">+ Multiple Choice</button>
-            <button onClick={() => addQuestion("short_answer")} className="rounded-lg bg-zinc-800 px-3 py-1.5 text-xs text-white">+ Short Answer</button>
+            <Button variant="secondary" size="xs" onClick={() => addQuestion("essay")}>+ Essay</Button>
+            <Button variant="secondary" size="xs" onClick={() => addQuestion("multiple_choice")}>+ Multiple Choice</Button>
+            <Button variant="secondary" size="xs" onClick={() => addQuestion("short_answer")}>+ Short Answer</Button>
           </div>
 
           {questions.map((q, idx) => (
             <div key={idx} className="rounded-lg border p-4">
               <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs font-medium text-zinc-500">Q{idx + 1} &middot; {q.type.replace("_", " ")}</span>
-                <button onClick={() => removeQuestion(idx)} className="text-xs text-red-500">Remove</button>
+                <span className="text-xs font-medium text-muted-foreground">Q{idx + 1} &middot; {q.type.replace("_", " ")}</span>
+                <Button variant="destructive" size="xs" onClick={() => removeQuestion(idx)} title="Remove this question">Remove</Button>
               </div>
-              <input value={q.question} onChange={(e) => updateQuestion(idx, "question", e.target.value)} placeholder="Question" className="mb-2 w-full rounded border px-3 py-1.5 text-sm outline-none focus:border-zinc-400" />
-              <input type="number" value={q.maxScore} onChange={(e) => updateQuestion(idx, "maxScore", Number(e.target.value))} placeholder="Max score" className="mb-2 w-24 rounded border px-3 py-1.5 text-sm outline-none focus:border-zinc-400" />
+              <input value={q.question} onChange={(e) => updateQuestion(idx, "question", e.target.value)} placeholder="Question" className="mb-2 w-full rounded border px-3 py-1.5 text-sm outline-none focus:border-ring" />
+              <input type="number" value={q.maxScore} onChange={(e) => updateQuestion(idx, "maxScore", Number(e.target.value))} placeholder="Max score" className="mb-2 w-24 rounded border px-3 py-1.5 text-sm outline-none focus:border-ring" />
 
               {q.type === "multiple_choice" && (
                 <div className="space-y-1">
@@ -117,22 +128,23 @@ export default function CreateExamPage() {
                         const opts = [...(q.options || ["", "", "", ""])]
                         opts[oi] = e.target.value
                         updateQuestion(idx, "options", opts)
-                      }} placeholder={`Option ${String.fromCharCode(65 + oi)}`} className="flex-1 rounded border px-3 py-1 text-sm outline-none focus:border-zinc-400" />
+                      }} placeholder={`Option ${String.fromCharCode(65 + oi)}`} className="flex-1 rounded border px-3 py-1 text-sm outline-none focus:border-ring" />
                     </div>
                   ))}
                 </div>
               )}
 
               {q.type === "short_answer" && (
-                <input value={q.answer || ""} onChange={(e) => updateQuestion(idx, "answer", e.target.value)} placeholder="Correct answer" className="w-full rounded border px-3 py-1.5 text-sm outline-none focus:border-zinc-400" />
+                <input value={q.answer || ""} onChange={(e) => updateQuestion(idx, "answer", e.target.value)} placeholder="Correct answer" className="w-full rounded border px-3 py-1.5 text-sm outline-none focus:border-ring" />
               )}
             </div>
           ))}
         </div>
 
-        <button onClick={handleSubmit} disabled={!title || !subjectId || questions.length === 0} className="rounded-lg bg-zinc-900 px-6 py-2 text-sm text-white disabled:opacity-50">
+        <Button onClick={handleSubmit} disabled={!title || !subjectId || questions.length === 0}>
           Create Exam
-        </button>
+        </Button>
+        <Button variant="outline" onClick={() => router.back()} className="ml-2">Cancel</Button>
       </div>
     </div>
   )

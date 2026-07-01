@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { safeFetchJSON, safeFetch } from "@/lib/security"
+import { Button } from "@/components/ui/button"
 
 interface ProjectFile {
   id: string
@@ -31,6 +32,10 @@ export default function ProjectDetailPage() {
   }, [id])
 
   async function upload(file: File) {
+    const allowed = [".pdf", ".doc", ".docx", ".txt", ".md", ".zip"]
+    const ext = "." + file.name.split(".").pop()?.toLowerCase()
+    if (!allowed.includes(ext)) { alert("Unsupported file type. Allowed: " + allowed.join(", ")); return }
+    if (file.size > 10 * 1024 * 1024) { alert("File too large. Max 10 MB."); return }
     setUploading(true)
     const form = new FormData()
     form.append("file", file)
@@ -44,11 +49,11 @@ export default function ProjectDetailPage() {
 
   return (
     <div>
-      <button onClick={() => router.push("/projects")} className="mb-4 text-sm text-zinc-500 hover:text-zinc-900">
+      <Button variant="ghost" onClick={() => router.push("/projects")} className="mb-4">
         &larr; Back
-      </button>
+      </Button>
       <h1 className="mb-1 text-xl font-semibold">{project?.name || "Loading..."}</h1>
-      {project?.description && <p className="mb-4 text-sm text-zinc-500">{project.description}</p>}
+      {project?.description && <p className="mb-4 text-sm text-muted-foreground">{project.description}</p>}
 
       <div className="mb-4">
         <input
@@ -57,13 +62,12 @@ export default function ProjectDetailPage() {
           className="hidden"
           onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])}
         />
-        <button
+        <Button
           onClick={() => fileInput.current?.click()}
           disabled={uploading}
-          className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm text-white disabled:opacity-50"
         >
           {uploading ? "Uploading..." : "+ Upload File"}
-        </button>
+        </Button>
       </div>
 
       <div className="space-y-2">
@@ -71,11 +75,14 @@ export default function ProjectDetailPage() {
           <div key={f.id} className="flex items-center justify-between rounded-lg border px-4 py-2">
             <div>
               <div className="text-sm font-medium">{f.name}</div>
-              <div className="text-xs text-zinc-400">{(f.size / 1024).toFixed(1)} KB</div>
+              <div className="text-xs text-muted-foreground">{(f.size / 1024).toFixed(1)} KB</div>
             </div>
-            <a href={f.url} target="_blank" className="text-sm text-zinc-600 hover:text-zinc-900">Download</a>
+            <a href={f.url} target="_blank" className="text-sm text-muted-foreground hover:text-foreground">Download</a>
           </div>
         ))}
+        {(!project?.files || project.files.length === 0) && (
+          <p className="text-muted-foreground text-sm">No files uploaded yet. Upload your first file above.</p>
+        )}
       </div>
     </div>
   )
