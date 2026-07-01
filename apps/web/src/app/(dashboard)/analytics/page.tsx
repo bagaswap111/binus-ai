@@ -29,10 +29,10 @@ export default function AnalyticsPage() {
   return (
     <div>
       <h1 className="mb-6 text-xl font-semibold">Learning Analytics</h1>
-      <div className="mb-6 flex gap-2 border-b pb-2">
+      <div className="tab-list">
         {["grades", "gaps"].map((t) => (
           <button key={t} onClick={() => setTab(t)}
-            className={`rounded-t-md px-4 py-2 text-sm font-medium capitalize ${tab === t ? "border-b-2 border-zinc-900 text-zinc-900" : "text-zinc-400 hover:text-zinc-700"}`}
+            className={`tab ${tab === t ? "tab-active" : ""}`}
           >{t.replace("-", " ")}</button>
         ))}
       </div>

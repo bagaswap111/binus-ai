@@ -54,6 +54,11 @@ model User {
   groupMessages GroupMessage[]
   forumsCreated DiscussionForum[] @relation("ForumCreator")
   forumPosts DiscussionPost[]
+  xp           UserXp?
+  badges       Badge[]
+  challengeCompletions ChallengeCompletion[]
+  contentReviews      ContentReview[]  @relation("ContentReviewAuthor")
+  contentReviewsReviewed ContentReview[] @relation("Reviewer")
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -336,6 +341,74 @@ model DiscussionPost {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ponytail: gamification — XP, badges, streaks, daily challenges
+model UserXp {
+  id        String    @id @default(cuid())
+  userId    String    @unique
+  user      User      @relation(fields: [userId], references: [id])
+  xp        Int       @default(0)
+  level     Int       @default(1)
+  streak    Int       @default(0)
+  lastActiveAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Badge {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String   // streak_7, xp_1000, quiz_master, first_chat
+  name      String
+  earnedAt  DateTime @default(now())
+
+  @@unique([userId, type])
+}
+
+model DailyChallenge {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  xpReward    Int      @default(50)
+  date        DateTime
+  completions ChallengeCompletion[]
+  createdAt   DateTime @default(now())
+}
+
+model ChallengeCompletion {
+  id          String   @id @default(cuid())
+  challengeId String
+  challenge   DailyChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  completedAt DateTime @default(now())
+
+  @@unique([challengeId, userId])
+}
+
+// ponytail: C5 — HITL content review queue
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model ContentReview {
+  id              String       @id @default(cuid())
+  submittedById   String?
+  submittedBy     User?        @relation("ContentReviewAuthor", fields: [submittedById], references: [id])
+  inputText       String
+  classification  String       // safe, content_guidance, highly_sensitive, toxic
+  category        String?      // sub-kategori (violence, hate_speech, etc.)
+  confidence      Float
+  reviewedById    String?
+  reviewedBy      User?        @relation("Reviewer", fields: [reviewedById], references: [id])
+  status          ReviewStatus @default(PENDING)
+  reviewerNote    String?
+  createdAt       DateTime     @default(now())
+  reviewedAt      DateTime?
 }
 
 model ModelRegistry {

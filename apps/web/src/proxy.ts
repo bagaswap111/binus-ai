@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server"
 import { decode } from "@auth/core/jwt"
 
 if (!process.env.AUTH_SECRET) {
-  throw new Error("AUTH_SECRET is required — set it in .env")
+  throw new Error("AUTH_SECRET is required")
 }
 
 const publicPaths = ["/login", "/register", "/api/auth", "/api/register", "/api/schools", "/_next", "/favicon.ico"]
@@ -18,18 +18,20 @@ export async function proxy(req: NextRequest) {
   const token = req.cookies.get(cookieName)?.value
 
   if (!token) {
-    return Response.redirect(new URL("/login", req.url))
+    const login = new URL("/login", req.url)
+    login.searchParams.set("callbackUrl", pathname)
+    return Response.redirect(login)
   }
 
   try {
-    const payload = await decode({
-      token,
-      secret: process.env.AUTH_SECRET!,
-      salt: cookieName,
-    })
-    if (!payload) throw new Error("empty payload")
+    const payload = await decode({ token, secret: process.env.AUTH_SECRET!, salt: cookieName }) as any
+    // ponytail: manual exp check since decode doesn't validate it
+    if (!payload || !payload.sub || !payload.role) throw new Error("invalid payload")
+    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) throw new Error("expired")
   } catch {
-    return Response.redirect(new URL("/login", req.url))
+    const login = new URL("/login", req.url)
+    login.searchParams.set("callbackUrl", pathname)
+    return Response.redirect(login)
   }
 
   return NextResponse.next()

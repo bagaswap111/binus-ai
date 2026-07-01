@@ -68,7 +68,7 @@ export default function CreateExamPage() {
         <textarea value={instructions} onChange={(e) => setInstructions(e.target.value)} placeholder="Instructions (optional)" className="w-full rounded-lg border px-4 py-2 text-sm outline-none focus:border-zinc-400" rows={2} />
 
         <div className="flex gap-4">
-          <select value={subjectId} onChange={(e) => setSubjectId(e.target.value)} className="flex-1 rounded-lg border px-4 py-2 text-sm outline-none focus:border-zinc-400">
+          <select value={subjectId} onChange={(e) => setSubjectId(e.target.value)} className="flex-1">
             <option value="">Select subject</option>
             {subjects.map((s) => <option key={s.id} value={s.id}>{s.name} ({s.code})</option>)}
           </select>

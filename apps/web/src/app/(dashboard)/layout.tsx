@@ -17,6 +17,8 @@ const navItems = [
   { href: "/teaching", label: "Teaching" },
   { href: "/collaboration", label: "Collaborate" },
   { href: "/analytics", label: "Analytics" },
+  { href: "/career", label: "Career" },
+  { href: "/gamification", label: "Gamification" },
   { href: "/admin", label: "Admin", roles: ["ADMIN", "SUPER_ADMIN"] },
 ]
 

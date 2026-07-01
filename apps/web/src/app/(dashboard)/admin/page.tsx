@@ -55,7 +55,10 @@ export default function AdminPage() {
 
   return (
     <div>
-      <h1 className="mb-4 text-xl font-semibold">Admin — Model Registry</h1>
+      <a href="/admin/reviews" className="mb-4 inline-block rounded-lg border px-4 py-3 text-sm hover:bg-muted transition-colors">
+        🛡️ Content Review Queue <span className="text-muted-foreground">→</span>
+      </a>
+      <h1 className="mb-4 mt-4 text-xl font-semibold">Admin — Model Registry</h1>
 
       <button onClick={() => setShowForm(!showForm)} className="mb-4 rounded-md bg-zinc-900 px-3 py-1.5 text-sm text-white">
         + Add Model
@@ -65,7 +68,7 @@ export default function AdminPage() {
         <form onSubmit={addModel} className="mb-6 space-y-3 rounded-lg border p-4">
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Display Name (e.g. GPT-4o Mini)" required className="w-full rounded-md border px-3 py-2 text-sm" />
           <input value={modelId} onChange={(e) => setModelId(e.target.value)} placeholder="Model ID (e.g. gpt-4o-mini)" required className="w-full rounded-md border px-3 py-2 text-sm" />
-          <select value={provider} onChange={(e) => setProvider(e.target.value)} className="w-full rounded-md border px-3 py-2 text-sm">
+          <select value={provider} onChange={(e) => setProvider(e.target.value)}>
             <option value="OPENAI">OpenAI</option>
             <option value="ANTHROPIC">Anthropic</option>
             <option value="GOOGLE">Google</option>

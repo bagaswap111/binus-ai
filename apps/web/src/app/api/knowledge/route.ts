@@ -21,6 +21,10 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  // ponytail: knowledge base write requires teacher/lecturer/admin
+  if (!["TEACHER", "LECTURER", "ADMIN", "SUPER_ADMIN"].includes(session.user.role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
 
   const { subjectId, title, content, source } = await req.json()
   if (!subjectId || !title || !content) {

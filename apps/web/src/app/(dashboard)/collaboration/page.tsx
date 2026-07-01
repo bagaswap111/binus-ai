@@ -8,10 +8,10 @@ export default function CollaborationPage() {
   return (
     <div>
       <h1 className="mb-6 text-xl font-semibold">Collaboration</h1>
-      <div className="mb-6 flex gap-2 border-b pb-2">
+      <div className="tab-list">
         {["groups", "forums"].map((t) => (
           <button key={t} onClick={() => setTab(t)}
-            className={`rounded-t-md px-4 py-2 text-sm font-medium capitalize ${tab === t ? "border-b-2 border-zinc-900 text-zinc-900" : "text-zinc-400 hover:text-zinc-700"}`}
+            className={`tab ${tab === t ? "tab-active" : ""}`}
           >{t}</button>
         ))}
       </div>
@@ -77,10 +77,10 @@ function GroupsTab() {
         <div className="space-y-1">
           {groups.map((g) => (
             <button key={g.id} onClick={() => selectGroup(g.id)}
-              className={`w-full rounded-md px-3 py-2 text-left text-sm ${selected === g.id ? "bg-zinc-200 font-medium" : "hover:bg-zinc-100"}`}
+              className={`sel-item ${selected === g.id ? "sel-item-active" : ""}`}
             >
               <div className="truncate font-medium">{g.name}</div>
-              <div className="text-xs text-zinc-400">{g._count.members} members &middot; {g._count.messages} messages</div>
+              <div className="text-xs text-muted-foreground">{g._count.members} members &middot; {g._count.messages} messages</div>
             </button>
           ))}
         </div>
@@ -170,10 +170,10 @@ function ForumsTab() {
         <div className="space-y-1">
           {forums.map((f) => (
             <button key={f.id} onClick={() => selectForum(f.id)}
-              className={`w-full rounded-md px-3 py-2 text-left text-sm ${selected === f.id ? "bg-zinc-200 font-medium" : "hover:bg-zinc-100"}`}
+              className={`sel-item ${selected === f.id ? "sel-item-active" : ""}`}
             >
               <div className="truncate font-medium">{f.title} {f.isPinned && "📌"}</div>
-              <div className="text-xs text-zinc-400">{f._count.posts} posts &middot; {f.createdBy.name}</div>
+              <div className="text-xs text-muted-foreground">{f._count.posts} posts &middot; {f.createdBy.name}</div>
             </button>
           ))}
         </div>

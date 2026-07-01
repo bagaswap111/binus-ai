@@ -21,6 +21,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
+  const membership = await prisma.studyGroupMember.findUnique({
+    where: { groupId_userId: { groupId: id, userId: session.user.id } },
+  })
+  if (!membership) return NextResponse.json({ error: "Not a member" }, { status: 403 })
+
   const { content } = await req.json()
   const msg = await prisma.groupMessage.create({
     data: { groupId: id, userId: session.user.id, content },

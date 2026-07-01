@@ -85,20 +85,20 @@ function QuestionForm({ onDone }: { onDone: () => void }) {
   return (
     <div className="mb-6 rounded-lg border p-4 space-y-3">
       <div className="flex gap-3">
-        <select value={form.subjectId} onChange={(e) => setForm({ ...form, subjectId: e.target.value })} className="flex-1 rounded border px-3 py-1.5 text-sm outline-none">
+          <select value={form.subjectId} onChange={(e) => setForm({ ...form, subjectId: e.target.value })} className="flex-1">
           <option value="">Subject</option>
           {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
-        <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="rounded border px-3 py-1.5 text-sm outline-none">
+        <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
           <option value="essay">Essay</option>
           <option value="multiple_choice">Multiple Choice</option>
           <option value="short_answer">Short Answer</option>
         </select>
-        <select value={form.bloomLevel} onChange={(e) => setForm({ ...form, bloomLevel: e.target.value })} className="rounded border px-3 py-1.5 text-sm outline-none">
+        <select value={form.bloomLevel} onChange={(e) => setForm({ ...form, bloomLevel: e.target.value })}>
           <option value="">Bloom Level</option>
           {BLOOM_LEVELS.map((b) => <option key={b} value={b}>{b}</option>)}
         </select>
-        <select value={form.difficulty} onChange={(e) => setForm({ ...form, difficulty: e.target.value })} className="rounded border px-3 py-1.5 text-sm outline-none">
+        <select value={form.difficulty} onChange={(e) => setForm({ ...form, difficulty: e.target.value })}>
           <option value="">Difficulty</option>
           <option value="easy">Easy</option>
           <option value="medium">Medium</option>

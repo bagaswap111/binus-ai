@@ -2,7 +2,7 @@
 import { auth } from "@/auth"
 import { NextResponse } from "next/server"
 
-const TEACHER_ROLES = new Set(["TEACHER", "LECTURER", "ADMIN", "SUPER_ADMIN"])
+export const TEACHER_ROLES = new Set(["TEACHER", "LECTURER", "ADMIN", "SUPER_ADMIN"])
 
 export type SessionUser = { id: string; role: string; email: string; name: string; schoolId?: string }
 

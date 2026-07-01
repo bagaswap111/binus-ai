@@ -8,10 +8,10 @@ export default function TeachingToolsPage() {
   return (
     <div>
       <h1 className="mb-6 text-xl font-semibold">Teaching Tools</h1>
-      <div className="mb-6 flex gap-2 border-b pb-2">
+      <div className="tab-list">
         {["syllabus", "learning-path"].map((t) => (
           <button key={t} onClick={() => setTab(t)}
-            className={`rounded-t-md px-4 py-2 text-sm font-medium capitalize ${tab === t ? "border-b-2 border-zinc-900 text-zinc-900" : "text-zinc-400 hover:text-zinc-700"}`}
+            className={`tab ${tab === t ? "tab-active" : ""}`}
           >
             {t.replace("-", " ")}</button>
         ))}
@@ -96,7 +96,7 @@ function LearningPathTab() {
     <div>
       <p className="mb-4 text-sm text-zinc-500">Generate a personalized learning path based on current performance.</p>
       <div className="max-w-lg space-y-3">
-        <select value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} className="w-full rounded-lg border px-4 py-2 text-sm outline-none">
+        <select value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })}>
           <option value="">Select subject</option>
           {subjects.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>

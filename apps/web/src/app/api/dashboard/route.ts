@@ -9,7 +9,7 @@ export async function GET() {
   const user = await prisma.user.findUnique({ where: { id: session.user.id } })
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 })
 
-  const isTeacher = ["TEACHER", "LECTURER", "ADMIN", "SUPER_ADMIN"].includes(user.role)
+  const isTeacher = user.role === "TEACHER" || user.role === "LECTURER" || user.role === "ADMIN" || user.role === "SUPER_ADMIN"
 
   const [examCount, projectCount, sessionCount, gradeData, recentExams] = await Promise.all([
     prisma.exam.count({ where: isTeacher ? { teacherId: user.id } : { results: { some: { studentId: user.id } } } }),

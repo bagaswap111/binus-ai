@@ -45,13 +45,16 @@ export async function POST(req: Request) {
   const history = messages.map((m: any) => ({ role: m.role, content: m.content }))
 
   const gatewayUrl = process.env.GATEWAY_URL || "http://localhost:8000"
+  const gwHeaders: Record<string, string> = { "Content-Type": "application/json" }
+  if (process.env.GATEWAY_API_KEY) gwHeaders["X-API-Key"] = process.env.GATEWAY_API_KEY
   const gatewayRes = await fetch(`${gatewayUrl}/v1/chat`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: gwHeaders,
     body: JSON.stringify({
       messages: history,
       model: modelId || "gpt-4o-mini",
       user_role: user.role || "SMA",
+      user_id: user.id,
       subject_id: subjectId,
     }),
   })

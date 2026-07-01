@@ -11,8 +11,13 @@ declare module "@auth/core/jwt" {
   interface JWT { id?: string; role?: string; schoolId?: string }
 }
 
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
+  cookies: {
+    sessionToken: { options: { sameSite: "lax" } },
+  },
   pages: { signIn: "/login" },
   providers: [
     Credentials({
@@ -22,11 +27,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null
+        const email = (credentials?.email as string)?.trim().toLowerCase() || ""
+        const password = (credentials?.password as string) || ""
+        if (!email || !password || !emailRegex.test(email)) return null
+        if (password.length > 128) return null
         const { default: prisma } = await import("@/lib/prisma")
-        const user = await prisma.user.findUnique({ where: { email: credentials.email as string } })
+        const user = await prisma.user.findUnique({ where: { email } })
         if (!user) return null
-        const valid = await bcrypt.compare(credentials.password as string, user.password)
+        const valid = await bcrypt.compare(password, user.password)
         if (!valid) return null
         return { id: user.id, email: user.email, name: user.name, role: user.role, schoolId: user.schoolId }
       },
@@ -45,12 +53,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (account?.provider === "microsoft-entra-id") {
         const email = profile?.email as string | undefined
         if (!email || !email.endsWith("@binus.ac.id")) {
-          return "/login?error=Only @binus.ac.id accounts are allowed"
+          return "/login?error=Access denied"
         }
         const { default: prisma } = await import("@/lib/prisma")
-        const existing = await prisma.user.findUnique({ where: { email } })
+          const existing = await prisma.user.findUnique({ where: { email } })
         if (!existing) {
-          const school = await prisma.school.findFirst()
+          const school = await prisma.school.findFirst({ orderBy: { name: "asc" } })
           if (!school) return false
           await prisma.user.create({
             data: {

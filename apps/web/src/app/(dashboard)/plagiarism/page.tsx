@@ -41,7 +41,7 @@ export default function PlagiarismPage() {
       <h1 className="mb-6 text-xl font-semibold">Plagiarism Checker</h1>
 
       <div className="mb-6 flex gap-3">
-        <select value={selected} onChange={(e) => setSelected(e.target.value)} className="flex-1 rounded-lg border px-4 py-2 text-sm outline-none">
+        <select value={selected} onChange={(e) => setSelected(e.target.value)} className="flex-1">
           <option value="">Select a project</option>
           {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>

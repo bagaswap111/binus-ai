@@ -88,9 +88,7 @@ export default function ChatPage() {
           <button
             key={s.id}
             onClick={() => loadSession(s.id)}
-            className={`w-full truncate rounded-md px-3 py-2 text-left text-sm ${
-              currentSessionId === s.id ? "bg-zinc-200 font-medium" : "hover:bg-zinc-100"
-            }`}
+            className={`sel-item ${currentSessionId === s.id ? "sel-item-active" : ""}`}
           >
             {s.title}
           </button>

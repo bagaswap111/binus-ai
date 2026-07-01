@@ -39,7 +39,24 @@ async function main() {
     },
   })
 
-  console.log(`Seed done: ${Object.keys(created).length} schools, admin@binus.edu / admin123`)
+  // Seed daily challenges
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const challenges = [
+    { title: "Chat dengan AI", description: "Kirim 5 pesan ke AI Assistant", xpReward: 50 },
+    { title: "Diskusi Forum", description: "Buat 1 posting di forum diskusi", xpReward: 30 },
+    { title: "Kerjakan Soal", description: "Selesaikan 1 soal dari bank soal", xpReward: 40 },
+    { title: "Belajar 30 Menit", description: "Akses knowledge base selama 30 menit", xpReward: 60 },
+    { title: "Review Materi", description: "Baca 1 dokumen di project folder", xpReward: 25 },
+  ]
+  for (const c of challenges) {
+    await prisma.dailyChallenge.upsert({
+      where: { id: `${c.title}-${today.toISOString()}` },
+      update: {},
+      create: { id: `${c.title}-${today.toISOString()}`, ...c, date: today },
+    })
+  }
+
+  console.log(`Seed done: ${Object.keys(created).length} schools, ${challenges.length} challenges, admin@binus.edu / admin123`)
 }
 
 main().catch(console.error).finally(async () => {

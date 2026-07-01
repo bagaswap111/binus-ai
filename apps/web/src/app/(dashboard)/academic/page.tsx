@@ -9,10 +9,10 @@ export default function AcademicWritingPage() {
     <div>
       <h1 className="mb-6 text-xl font-semibold">Academic Writing Tools</h1>
 
-      <div className="mb-6 flex gap-2 border-b pb-2">
+      <div className="tab-list">
         {["literature", "citation", "structure", "outline"].map((t) => (
           <button key={t} onClick={() => setTab(t)}
-            className={`rounded-t-md px-4 py-2 text-sm font-medium capitalize ${tab === t ? "border-b-2 border-zinc-900 text-zinc-900" : "text-zinc-400 hover:text-zinc-700"}`}
+            className={`tab ${tab === t ? "tab-active" : ""}`}
           >
             {t.replace("_", " ")}
           </button>
@@ -52,7 +52,7 @@ function LitReviewTab() {
       <p className="mb-4 text-sm text-zinc-500">Upload articles to a project, then generate a comparison matrix.</p>
       <div className="mb-6 flex gap-3">
         <select value={selected} onChange={(e) => setSelected(e.target.value)}
-          className="flex-1 rounded-lg border px-4 py-2 text-sm outline-none"
+          className="flex-1"
           onFocus={() => fetch("/api/projects").then((r) => r.ok && r.json()).then(setProjects)}
         >
           <option value="">Select project</option>

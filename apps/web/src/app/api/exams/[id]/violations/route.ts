@@ -7,12 +7,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const user = await prisma.user.findUnique({ where: { id: session.user.id } })
-  if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 })
-
-  const isTeacher = ["TEACHER", "LECTURER", "ADMIN", "SUPER_ADMIN"].includes(user.role)
+  const isTeacher = ["TEACHER", "LECTURER", "ADMIN", "SUPER_ADMIN"].includes(session.user.role)
   const violations = await prisma.proctoringViolation.findMany({
-    where: isTeacher ? { examId: id } : { examId: id, studentId: user.id },
+    where: isTeacher ? { examId: id } : { examId: id, studentId: session.user.id },
     include: { student: { select: { id: true, name: true } } },
     orderBy: { timestamp: "desc" },
   })
@@ -23,6 +20,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  // ponytail: only allow violation creation if user has an active exam result
+  const result = await prisma.examResult.findFirst({
+    where: { examId: id, studentId: session.user.id, status: "IN_PROGRESS" },
+  })
+  if (!result) return NextResponse.json({ error: "No active exam session" }, { status: 403 })
 
   const { type, details } = await req.json()
   const violation = await prisma.proctoringViolation.create({

@@ -92,14 +92,14 @@ export default function RegisterPage() {
           <input name="email" type="email" placeholder="Email (@binus.ac.id)" required className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-zinc-400" />
           <input name="password" type="password" placeholder="Password (min 8 chars)" required minLength={8} className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-zinc-400" />
           <div className="flex gap-2">
-            <select name="role" className="flex-1 rounded-lg border px-3 py-2 text-sm outline-none focus:border-zinc-400">
+            <select name="role" className="flex-1">
               <option value="SMA">Student (SMA)</option>
               <option value="S1">Student (S1)</option>
               <option value="S2">Student (S2)</option>
               <option value="S3">Student (S3)</option>
               <option value="TEACHER">Teacher</option>
             </select>
-            <select name="schoolId" className="flex-1 rounded-lg border px-3 py-2 text-sm outline-none focus:border-zinc-400">
+            <select name="schoolId" className="flex-1">
               <option value="">Select school</option>
               {schools.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
