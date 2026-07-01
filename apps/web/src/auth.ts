@@ -50,12 +50,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async signIn({ account, profile }) {
-      if (account?.provider === "microsoft-entra-id") {
-        const email = profile?.email as string | undefined
-        if (!email || !email.endsWith("@binus.ac.id")) {
-          return "/login?error=Access denied"
-        }
-        const { default: prisma } = await import("@/lib/prisma")
+        if (account?.provider === "microsoft-entra-id") {
+          const email = profile?.email as string | undefined
+          if (!email || !email.endsWith("@binus.ac.id")) {
+            return "/login?error=Access denied"
+          }
+          const { default: prisma } = await import("@/lib/prisma")
           const existing = await prisma.user.findUnique({ where: { email } })
         if (!existing) {
           const school = await prisma.school.findFirst({ orderBy: { name: "asc" } })

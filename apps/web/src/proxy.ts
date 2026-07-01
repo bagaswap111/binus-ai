@@ -12,10 +12,9 @@ export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl
   if (publicPaths.some((p) => pathname.startsWith(p))) return NextResponse.next()
 
-  const cookieName = req.cookies.get("__Secure-authjs.session-token")?.value
-    ? "__Secure-authjs.session-token"
-    : "authjs.session-token"
-  const token = req.cookies.get(cookieName)?.value
+  const secureCookie = req.cookies.get("__Secure-authjs.session-token")
+  const token = secureCookie?.value ?? req.cookies.get("authjs.session-token")?.value
+  const salt = secureCookie ? "__Secure-authjs.session-token" : "authjs.session-token"
 
   if (!token) {
     const login = new URL("/login", req.url)
@@ -24,8 +23,7 @@ export async function proxy(req: NextRequest) {
   }
 
   try {
-    const payload = await decode({ token, secret: process.env.AUTH_SECRET!, salt: cookieName }) as any
-    // ponytail: manual exp check since decode doesn't validate it
+    const payload = await decode({ token, secret: process.env.AUTH_SECRET!, salt }) as any
     if (!payload || !payload.sub || !payload.role) throw new Error("invalid payload")
     if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) throw new Error("expired")
   } catch {

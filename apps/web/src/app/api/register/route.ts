@@ -10,7 +10,8 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export async function POST(req: Request) {
   try {
-    const { email, name, password, role, schoolId } = await req.json()
+    const { email: rawEmail, name, password, role, schoolId } = await req.json()
+    const email = (rawEmail || "").trim().toLowerCase()
     if (!email || !name || !password || !schoolId) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }

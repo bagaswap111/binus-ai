@@ -2,10 +2,9 @@ import { auth } from "@/auth"
 import prisma from "@/lib/prisma"
 import { NextResponse } from "next/server"
 
-// ponytail: shared API key between gateway and Next.js for inter-service auth
 const GATEWAY_API_KEY = process.env.GATEWAY_API_KEY || ""
+const VALID_STATUSES = ["PENDING", "APPROVED", "REJECTED"]
 
-// POST — create review (from gateway, validated via shared API key)
 export async function POST(req: Request) {
   if (GATEWAY_API_KEY && req.headers.get("X-API-Key") !== GATEWAY_API_KEY) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
@@ -25,7 +24,6 @@ export async function POST(req: Request) {
   return NextResponse.json({ ok: true })
 }
 
-// GET — list pending reviews (admin only)
 export async function GET(req: Request) {
   const session = await auth()
   if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN")) {
@@ -33,9 +31,10 @@ export async function GET(req: Request) {
   }
 
   const status = new URL(req.url).searchParams.get("status") || "PENDING"
+  const safeStatus = VALID_STATUSES.includes(status) ? status : "PENDING"
 
   const reviews = await prisma.contentReview.findMany({
-    where: { status: status as any },
+    where: { status: safeStatus as any },
     orderBy: { createdAt: "desc" },
     include: { submittedBy: { select: { name: true, email: true } } },
   })
@@ -43,7 +42,6 @@ export async function GET(req: Request) {
   return NextResponse.json({ reviews })
 }
 
-// PATCH — approve/reject review (admin only)
 export async function PATCH(req: Request) {
   const session = await auth()
   if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN")) {
@@ -52,6 +50,7 @@ export async function PATCH(req: Request) {
 
   const { reviewId, status, reviewerNote } = await req.json()
   if (!reviewId || !status) return NextResponse.json({ error: "Missing fields" }, { status: 400 })
+  if (!VALID_STATUSES.includes(status)) return NextResponse.json({ error: "Invalid status" }, { status: 400 })
 
   await prisma.contentReview.update({
     where: { id: reviewId },
