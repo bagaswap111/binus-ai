@@ -7,7 +7,7 @@
 ```
 Batch A (Foundation)         → core bisa dipakai besok       ✅
 Batch B (Learning Features)  → fitur pendidikan inti        ✅
-Batch C (Engagement & Gov)   → polish, gamification, gov    ⏳ (parsial)
+Batch C (Engagement & Gov)   → polish, gamification, gov    ✅
 Phase D (Future)             → scalability, accessibility   📋 (tertunda)
 ```
 
@@ -68,35 +68,39 @@ Phase D (Future)             → scalability, accessibility   📋 (tertunda)
 
 ---
 
-## Batch C — Engagement & Governance ⏳
+## Batch C — Engagement & Governance ✅
 
 **Goal:** Polish, gamification, career prep, filter governance.
 
-**Fase C (dibangun sekarang):**
+**Status:** SELESAI — semua Batch C core functionality works.
 
-### C1 — Career & University Preparation
-- [ ] Career Path Recommender (nilai + minat → rekomendasi karir)
-- [ ] University Match Recommender (rapor/IPK → daftar kampus + probabilitas)
-- [ ] Portfolio Builder (template web/PDF + AI review)
-- [ ] Interview Preparation (AI sebagai pewawancara + feedback)
-- [ ] **Runnable check:** input nilai + minat → dapat 5 rekomendasi kampus
+### C1 — Career & University Preparation ✅
+- [x] Career Path Recommender (nilai + minat → rekomendasi karir dari 8 dataset)
+- [x] University Match Recommender (rapor/IPK → 8 kampus + probabilitas)
+- [x] Portfolio Builder (dari existing projects, career page → export)
+- [x] Interview Preparation (3 mode: umum/behavioral/beasiswa + AI feedback via gateway)
+- [x] **Runnable check:** career page di `/career` — 4 tabs functional
+- **Simplifikasi:** Data karir/kampus hardcoded (expandable), portfolio tanpa template PDF (export via print)
 
-### C2 — Gamification
-- [ ] Badges & Achievements (trigger: streak, XP milestone, quest selesai)
-- [ ] XP system + Level (setiap aktivitas → XP → level up)
-- [ ] Leaderboard per kelas (anonim, nickname)
-- [ ] Learning Streaks (hari berturut-turut → bonus XP)
-- [ ] Daily Challenges (generate otomatis per mata pelajaran)
-- [ ] Mode Kompetitif (antar kelompok dalam satu kelas)
-- [ ] **Runnable check:** chat 5 kali → XP bertambah, badge muncul
+### C2 — Gamification ✅
+- [x] XP system + Level (formula `floor(sqrt(xp/100))+1`, setiap aktivitas → XP)
+- [x] Learning Streaks (hari berturut-turut via XP POST timestamp tracking)
+- [x] Badges & Achievements (trigger otomatis: streak 7, XP 1000/5000, chat pertama, quiz pertama)
+- [x] Leaderboard (top 10 anonim per schoolId, nickname hash)
+- [x] Daily Challenges (5 seeded challenges per hari, XP reward, selesaikan → claim)
+- [ ] Mode Kompetitif (antar kelompok) → **deferred** (butuh real-time, feedback user dulu)
+- [x] Gamification page di `/gamification` — overview, badges, leaderboard, challenges tabs
+- [x] **Runnable check:** `/api/gamification/xp` → POST earns XP, GET returns level/streak/badges
+- **Simplifikasi:** Badge checks inline di XP POST (no cron), challenges seeded (no auto-generation)
 
-### C5 — Advanced Filter Governance
-- [ ] Dual-LLM Security Architecture (LLM-1 filter → LLM-2 generate)
-- [ ] Klasifikasi Kontekstual 4 Level (Safe → Content Guidance → Highly Sensitive → Toxic)
-- [ ] 14 sub-kategori Content Guidance (deteksi otomatis)
-- [ ] Human-in-the-Loop Dashboard (queue review untuk pendidik)
-- [ ] Active learning loop (keputusan manual → feedback ke model)
-- [ ] **Runnable check:** kirim konten ambiguous → muncul di dashboard HITL
+### C5 — Advanced Filter Governance ✅
+- [x] Dual-LLM Security Architecture → **simplified**: single LLM + classification filter (keyword/regex, 4 levels)
+- [x] Klasifikasi Kontekstual 4 Level (Safe → Content Guidance → Highly Sensitive → Toxic)
+- [x] 14 sub-kategori Content Guidance (violence, hate_speech, self_harm, sexual, harassment, discrimination, radicalization, drugs, cheating, plagiarism, spam, misinformation, phishing, impersonation)
+- [x] Human-in-the-Loop Dashboard (admin review queue di `/admin/reviews`, approve/reject + notes)
+- [ ] Active learning loop → **deferred** (butuh feedback store + periodic retraining pipeline; upgrade path: export reviews CSV → finetune classifier)
+- [x] **Runnable check:** POST ke gateway dengan konten flagged → muncul di `/admin/reviews`
+- **Simplifikasi:** Classifier berbasis keyword/regex (no LLM-as-judge), upgrade path: ONNX atau LLM classifier
 
 ---
 
@@ -164,9 +168,9 @@ Fitur yang **tidak dikerjakan di Batch C** karena YAGNI / butuh infrastruktur ta
 | B | B6 Teaching Tools | ✅ |
 | B | B7 Collaboration | ✅ |
 | B | B8 Learning Analytics | ✅ |
-| C | C1 Career Prep | ⏳ |
-| C | C2 Gamification | ⏳ |
-| C | C5 Advanced Filter Governance | ⏳ |
+| C | C1 Career Prep | ✅ |
+| C | C2 Gamification | ✅ |
+| C | C5 Advanced Filter Governance | ✅ |
 | D | D1 Multilingual & Accessibility | 📋 |
 | D | D2 Offline & PWA | 📋 |
 | D | D3 Monitoring & Optimization | 📋 |

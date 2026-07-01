@@ -1,14 +1,14 @@
 package binus.policy
 
-# kategori konten sensitif
-toxic_keywords := {
+import future.keywords.in
+
+categories := {
     "violence":   {"bunuh", "membunuh", "senjata", "bom", "teroris", "kill", "bomb", "weapon", "murder"},
     "hate_speech": {"bodoh", "benci", "rasis", "sara", "anjing", "babi", "idiot"},
     "sexual":     {"seks", "sex", "porn", "telanjang", "nude", "nsfw", "xxx"},
     "self_harm":  {"bunuh diri", "self-harm", "suicide", "selfharm", "cutting"},
 }
 
-# kategori yang diblokir per role
 blocked_for_role := {
     "SD":     {"sexual", "self_harm", "violence", "hate_speech"},
     "SMP":    {"sexual", "self_harm"},
@@ -18,7 +18,6 @@ blocked_for_role := {
     "S3":     {"self_harm"},
 }
 
-# pengecualian per-subject — category dilarang TAPI diizinkan untuk subject tertentu
 subject_exemptions := {
     "biology": {"sexual"},
     "ppkn":    {"hate_speech"},
@@ -26,34 +25,39 @@ subject_exemptions := {
     "ipa":     {"sexual"},
 }
 
+# ponytail: unknown roles → most restrictive (SD). Case normalized in Python.
+role := input.user_role {
+    input.user_role in {"SD", "SMP", "SMA", "S1", "S2", "S3"}
+} else := "SD"
+
 default allow := true
 
-# found_keywords: semua keyword toxic yang muncul di text
-found_keywords[cat] := words {
-    some cat, word
-    words := {w | w := toxic_keywords[cat][_]; contains(input.text, w)}
-    count(words) > 0
-}
-
-# blocked_categories: kategori yang harus diblokir (tergantung role)
-blocked_categories[cat] {
-    cat := blocked_for_role[input.user_role][_]
-}
-
-# exemption_applies: apakah ada pengecualian subject untuk keyword ini
-exemption_applies[cat] {
+# ponytail: multi-word phrases use contains (less false-positive risk than single words)
+found_keywords[cat] contains word {
     some cat
-    blocked_categories[cat]
-    exemptions := subject_exemptions[input.subject_id][_]
-    exemptions == cat
+    some word in categories[cat]
+    contains(word, " ")
+    contains(input.text, word)
 }
 
-# allow = true jika tidak ada keyword dari kategori yang diblokir (tanpa exemption)
+# ponytail: single words use word-boundary regex to avoid substring false positives
+found_keywords[cat] contains word {
+    some cat
+    some word in categories[cat]
+    not contains(word, " ")
+    re_match(sprintf("\\b%s\\b", [word]), input.text)
+}
+
+blocked_categories[cat] {
+    some cat
+    cat in blocked_for_role[role]
+}
+
 allow := false {
     some cat
     blocked_categories[cat]
     found_keywords[cat]
-    not exemption_applies[cat]
+    not subject_exemptions[input.subject_id][cat]
 }
 
 reasons := ["Content blocked: inappropriate for role"] {
