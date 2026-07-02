@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { ArrowUpDown } from "lucide-react"
 import { toast } from "sonner"
 import { safeFetchJSON, safeFetch } from "@/lib/security"
 import { Button } from "@/components/ui/button"
@@ -22,14 +23,16 @@ export default function ProjectsPage() {
   const [submitting, setSubmitting] = useState(false)
   const [search, setSearch] = useState("")
   const [sort, setSort] = useState("date")
+  const [asc, setAsc] = useState(false)
   const router = useRouter()
 
   useEffect(() => { safeFetchJSON<Project[]>("/api/projects").then((d) => d && setProjects(d)) }, [])
 
   const filtered = projects.filter((p) => !search || p.name.toLowerCase().includes(search.toLowerCase()))
+  const dir = asc ? 1 : -1
   const sorted = [...filtered].sort((a, b) => {
-    if (sort === "name") return a.name.localeCompare(b.name)
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    if (sort === "name") return a.name.localeCompare(b.name) * dir
+    return (new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) * dir
   })
 
   async function create(e: React.FormEvent) {
@@ -57,9 +60,12 @@ export default function ProjectsPage() {
         <h1 className="text-xl font-semibold">Projects</h1>
         <div className="flex items-center gap-3">
           <select value={sort} onChange={(e) => setSort(e.target.value)} className="rounded-lg border px-3 py-1.5 text-sm outline-none focus:border-ring">
-            <option value="date">Newest</option>
+            <option value="date">Date</option>
             <option value="name">Name</option>
           </select>
+          <button onClick={() => setAsc(!asc)} className="rounded-lg border p-1.5 text-muted-foreground hover:text-foreground" aria-label={asc ? "Ascending" : "Descending"}>
+            <ArrowUpDown className="size-4" aria-hidden="true" />
+          </button>
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search projects..." className="rounded-lg border px-3 py-1.5 text-sm outline-none focus:border-ring w-48" />
           <Button onClick={() => setShowForm(!showForm)}>
             + New Project

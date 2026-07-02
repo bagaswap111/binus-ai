@@ -35,6 +35,7 @@ function GroupsTab() {
   const [newMsg, setNewMsg] = useState("")
   const [showForm, setShowForm] = useState(false)
   const [formName, setFormName] = useState("")
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => { safeFetchJSON<Array<{ id: string; name: string; description: string | null; _count: { members: number; messages: number }; subject: { name: string } | null }>>("/api/groups").then((d) => d && setGroups(d)) }, [])
 
@@ -59,11 +60,14 @@ function GroupsTab() {
   }
 
   async function createGroup() {
+    if (submitting || !formName.trim()) return
+    setSubmitting(true)
     await safeFetch("/api/groups", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: formName }),
     })
+    setSubmitting(false)
     setShowForm(false)
     setFormName("")
     safeFetchJSON<Array<{ id: string; name: string; description: string | null; _count: { members: number; messages: number }; subject: { name: string } | null }>>("/api/groups").then((d) => d && setGroups(d))
@@ -78,7 +82,7 @@ function GroupsTab() {
         {showForm && (
           <div className="mb-3 space-y-2 rounded border p-3">
             <input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Group name" className="w-full rounded border px-3 py-1.5 text-sm outline-none" />
-            <Button variant="secondary" onClick={createGroup} disabled={!formName} className="w-full">Create</Button>
+            <Button variant="secondary" onClick={createGroup} disabled={!formName || submitting} className="w-full">{submitting ? "Creating..." : "Create"}</Button>
           </div>
         )}
         <div className="space-y-1">
@@ -128,6 +132,7 @@ function ForumsTab() {
   const [newPost, setNewPost] = useState("")
   const [showForm, setShowForm] = useState(false)
   const [formTitle, setFormTitle] = useState("")
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => { safeFetchJSON<Array<{ id: string; title: string; description: string | null; _count: { posts: number }; subject: { name: string } | null; createdBy: { name: string }; isPinned: boolean }>>("/api/forums").then((d) => d && setForums(d)) }, [])
 
@@ -152,11 +157,14 @@ function ForumsTab() {
   }
 
   async function createForum() {
+    if (submitting || !formTitle.trim()) return
+    setSubmitting(true)
     await safeFetch("/api/forums", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: formTitle }),
     })
+    setSubmitting(false)
     setShowForm(false)
     setFormTitle("")
     safeFetchJSON<Array<{ id: string; title: string; description: string | null; _count: { posts: number }; subject: { name: string } | null; createdBy: { name: string }; isPinned: boolean }>>("/api/forums").then((d) => d && setForums(d))
@@ -171,7 +179,7 @@ function ForumsTab() {
         {showForm && (
           <div className="mb-3 space-y-2 rounded border p-3">
             <input value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="Forum title" className="w-full rounded border px-3 py-1.5 text-sm outline-none" />
-            <Button variant="secondary" onClick={createForum} disabled={!formTitle} className="w-full">Create</Button>
+            <Button variant="secondary" onClick={createForum} disabled={!formTitle || submitting} className="w-full">{submitting ? "Creating..." : "Create"}</Button>
           </div>
         )}
         <div className="space-y-1">

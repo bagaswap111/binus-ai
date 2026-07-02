@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
+import { ArrowUpDown } from "lucide-react"
 import { safeFetchJSON, safeFetch } from "@/lib/security"
 import { Button } from "@/components/ui/button"
 
@@ -25,6 +26,7 @@ export default function QuestionsPage() {
   const [showForm, setShowForm] = useState(false)
   const [search, setSearch] = useState("")
   const [sort, setSort] = useState("date")
+  const [asc, setAsc] = useState(false)
   const [page, setPage] = useState(1)
   const perPage = 20
 
@@ -33,11 +35,12 @@ export default function QuestionsPage() {
   }, [])
 
   const filtered = questions.filter((q) => !search || q.question.toLowerCase().includes(search.toLowerCase()) || (q.tags && q.tags.some((t) => t.toLowerCase().includes(search.toLowerCase()))))
+  const dir = asc ? 1 : -1
   const sorted = [...filtered].sort((a, b) => {
-    if (sort === "type") return a.type.localeCompare(b.type)
-    if (sort === "difficulty") return (a.difficulty || "").localeCompare(b.difficulty || "")
-    if (sort === "bloom") return (a.bloomLevel || "").localeCompare(b.bloomLevel || "")
-    return new Date(b.id).getTime() - new Date(a.id).getTime() // ponytail: id-based date fallback
+    if (sort === "type") return a.type.localeCompare(b.type) * dir
+    if (sort === "difficulty") return (a.difficulty || "").localeCompare(b.difficulty || "") * dir
+    if (sort === "bloom") return (a.bloomLevel || "").localeCompare(b.bloomLevel || "") * dir
+    return (new Date(b.id).getTime() - new Date(a.id).getTime()) * dir
   })
   const totalPages = Math.ceil(sorted.length / perPage)
   const paged = sorted.slice((page - 1) * perPage, page * perPage)
@@ -48,11 +51,14 @@ export default function QuestionsPage() {
         <h1 className="text-xl font-semibold">Question Bank</h1>
         <div className="flex items-center gap-3">
           <select value={sort} onChange={(e) => setSort(e.target.value)} className="rounded-lg border px-3 py-1.5 text-sm outline-none focus:border-ring">
-            <option value="date">Newest</option>
+            <option value="date">Date</option>
             <option value="type">Type</option>
             <option value="difficulty">Difficulty</option>
             <option value="bloom">Bloom Level</option>
           </select>
+          <button onClick={() => setAsc(!asc)} className="rounded-lg border p-1.5 text-muted-foreground hover:text-foreground" aria-label={asc ? "Ascending" : "Descending"}>
+            <ArrowUpDown className="size-4" aria-hidden="true" />
+          </button>
           <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} placeholder="Search questions..." className="rounded-lg border px-3 py-1.5 text-sm outline-none focus:border-ring w-48" />
           <Button onClick={() => setShowForm(!showForm)}>
             {showForm ? "Cancel" : "+ New Question"}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { ArrowUpDown } from "lucide-react"
 import { safeFetchJSON } from "@/lib/security"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
@@ -25,6 +26,7 @@ export default function ExamsPage() {
   const [exams, setExams] = useState<Exam[]>([])
   const [search, setSearch] = useState("")
   const [sort, setSort] = useState("date")
+  const [asc, setAsc] = useState(false)
   const [page, setPage] = useState(1)
   const perPage = 20
   const isTeacher = ["TEACHER", "LECTURER", "ADMIN", "SUPER_ADMIN"].includes(session?.user?.role || "")
@@ -34,10 +36,11 @@ export default function ExamsPage() {
   }, [])
 
   const filtered = exams.filter((e) => !search || e.title.toLowerCase().includes(search.toLowerCase()) || e.subject.code.toLowerCase().includes(search.toLowerCase()))
+  const dir = asc ? 1 : -1
   const sorted = [...filtered].sort((a, b) => {
-    if (sort === "title") return a.title.localeCompare(b.title)
-    if (sort === "status") return a.status.localeCompare(b.status)
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    if (sort === "title") return a.title.localeCompare(b.title) * dir
+    if (sort === "status") return a.status.localeCompare(b.status) * dir
+    return (new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) * dir
   })
   const totalPages = Math.ceil(sorted.length / perPage)
   const paged = sorted.slice((page - 1) * perPage, page * perPage)
@@ -49,10 +52,13 @@ export default function ExamsPage() {
         <h1 className="text-xl font-semibold">Exams</h1>
         <div className="flex items-center gap-3">
           <select value={sort} onChange={(e) => setSort(e.target.value)} className="rounded-lg border px-3 py-1.5 text-sm outline-none focus:border-ring">
-            <option value="date">Newest</option>
+            <option value="date">Date</option>
             <option value="title">Title</option>
             <option value="status">Status</option>
           </select>
+          <button onClick={() => setAsc(!asc)} className="rounded-lg border p-1.5 text-muted-foreground hover:text-foreground" aria-label={asc ? "Ascending" : "Descending"}>
+            <ArrowUpDown className="size-4" aria-hidden="true" />
+          </button>
           <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} placeholder="Search exams..." className="rounded-lg border px-3 py-1.5 text-sm outline-none focus:border-ring w-48" />
           {isTeacher && (
             <Button onClick={() => router.push("/exams/create")}>

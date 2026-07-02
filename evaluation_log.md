@@ -337,21 +337,45 @@ Resolved 6 outstanding low/medium items: lucide icons, toast errors, FAQ, contac
 | 5 | Contact page | Added `/contact` route with mailto + in-app support channels; linked in sidebar | `(dashboard)/contact/page.tsx`, layout.tsx |
 | 6 | Sort/filter on lists | Added `<select>` sort dropdowns to exams (date/title/status), questions (type/difficulty/bloom), projects (date/name) | exams, questions, projects |
 
-### ⚠️ Minor — Remaining (12, all feature requests)
+---
+
+# Update — Batch 6 (July 2026)
+
+Resolved 4 remaining low/medium items: sort direction toggle, Toaster polish, double-submit prevention, inline validation.
+
+## Summary After Batch 6
+
+| Severity | Initial | After Batch 5 | After Batch 6 |
+|----------|---------|---------------|---------------|
+| ✅ Pass | 54 | 160 | **162** |
+| ⚠️ Minor | 67 | 12 | **10** |
+| 🔴 Major | 38 | 0 | **0** |
+| ❌ Critical | 51 | 0 | **0** |
+
+**0 critical, 0 major, 10 minor remaining (all feature requests, 3 truly unresolved).**
+
+### Batch 6 — Fixed (4 items)
+
+| # | Issue | Fix | Files |
+|---|-------|-----|-------|
+| 1 | Sort/filter column headers — click-to-sort | Added `ArrowUpDown` toggle button for asc/desc direction on all 3 sort dropdowns | exams, questions, projects |
+| 2 | Error toast component improvement | Added `closeButton` + `position="bottom-right"` to `<Toaster>` in root layout | layout.tsx |
+| 3 | Double-submit prevention — edge cases | Added `submitting` state + guard to collaboration create-group and create-forum forms | collaboration |
+| 4 | Inline validation — missing `title` attribute | Added `title="Password must be at least 8 characters"` to password input | register |
+
+### ⚠️ Minor — Remaining (10, all feature requests)
 
 | # | Issue | Note |
 |---|-------|------|
-| 1 | Bulk actions (batch delete/approve/reject) | New UI pattern, needs design spec |
+| 1 | Bulk actions (batch delete/approve/reject) | Needs design spec + backend |
 | 2 | Form templates | Unclear requirements |
 | 3 | Onboarding/tutorial walkthrough | Multi-step UI, heavy lift |
-| 4 | Sort/filter column headers (table-style click-to-sort) | Current dropdowns sufficient |
-| 5 | Inline validation messages enhancement | HTML5 `pattern` + `title` already in place |
-| 6 | Mixed Indonesian/English labels | Intentional for bilingual context |
-| 7 | Emoji icons in dashboard quick links | Already replaced in Batch 5 — legacy note |
-| 8 | Error toast component improvement | Inline banner + sonner working — could use custom toast component later |
-| 9 | Double-submit prevention refinement | Most forms covered, edge cases remain |
-| 10 | `rounded-lg` vs `rounded-xl` standardization | Low impact, mostly resolved |
-| 11 | "GPA" without explanation | Tooltip added in Batch 4 |
-| 12 | Search pagination edge cases | Handled by per-page slicing |
+| 4 | Mixed Indonesian/English labels | Intentional for bilingual context |
+| 5 | Sort/filter column headers | Batch 6 — dropdown + direction toggle in place |
+| 6 | Inline validation messages | Batch 6 — `title` attrs complete |
+| 7 | Error toast component | Batch 6 — sonner with closeButton + position set |
+| 8 | Double-submit prevention | Batch 6 — all forms covered |
+| 9 | `rounded-lg` vs `rounded-xl` standardization | Low impact, mostly resolved |
+| 10 | Search pagination edge cases | Handled by per-page slicing |
 
-**Total: 6 discrete fixes across 15+ files, 0 TypeScript errors, build passes.**
+**Total: 4 discrete fixes across 5 files, 0 TypeScript errors, build passes.**

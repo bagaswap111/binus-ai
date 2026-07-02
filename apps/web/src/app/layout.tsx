@@ -28,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${fontSans.variable} ${fontMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <ThemeProvider><AuthProvider>{children}<Toaster richColors /></AuthProvider></ThemeProvider>
+        <ThemeProvider><AuthProvider>{children}<Toaster richColors closeButton position="bottom-right" /></AuthProvider></ThemeProvider>
       </body>
     </html>
   );
