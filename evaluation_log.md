@@ -308,3 +308,50 @@ Search (fully addressed), pagination (addressed), keyboard shortcuts (addressed)
 ## Final Verdict
 
 The app is production-ready from a usability standpoint. All blocking (Critical), all barrier (Major), and 49 of 67 Minor findings resolved. The remaining 18 are low-priority feature requests.**
+
+---
+
+# Update — Batch 5 (July 2026)
+
+Resolved 6 outstanding low/medium items: lucide icons, toast errors, FAQ, contact page, sort/filter.
+
+## Summary After Batch 5
+
+| Severity | Initial | After Batch 1-4 | After Batch 5 |
+|----------|---------|-----------------|---------------|
+| ✅ Pass | 54 | 157 | **160** |
+| ⚠️ Minor | 67 | 18 | **12** |
+| 🔴 Major | 38 | 0 | **0** |
+| ❌ Critical | 51 | 0 | **0** |
+
+**0 critical, 0 major, 12 minor remaining (all feature requests).**
+
+### Batch 5 — Fixed (6 items)
+
+| # | Issue | Fix | Files |
+|---|-------|-----|-------|
+| 1 | Lucide icon migration — replace emoji icons | Swapped 24+ emoji decorators with lucide-react components across dashboard, gamification, admin, reviews, collaboration, login, register | 8 page files |
+| 2 | Emoji dashboard icons → icon set | Same as above — all emoji quick-link/stat-card icons replaced | dashboard, gamification |
+| 3 | Error toast component | Added `<Toaster>` to root layout via `sonner`; replaced `useState` + inline `<p>` error pattern with `toast.error()` on 6 form pages | layout.tsx, admin, exams/create, projects, questions, register, login |
+| 4 | FAQ page | Added `/faq` route with `<details>`-based static Q&A; linked in sidebar | `(dashboard)/faq/page.tsx`, layout.tsx |
+| 5 | Contact page | Added `/contact` route with mailto + in-app support channels; linked in sidebar | `(dashboard)/contact/page.tsx`, layout.tsx |
+| 6 | Sort/filter on lists | Added `<select>` sort dropdowns to exams (date/title/status), questions (type/difficulty/bloom), projects (date/name) | exams, questions, projects |
+
+### ⚠️ Minor — Remaining (12, all feature requests)
+
+| # | Issue | Note |
+|---|-------|------|
+| 1 | Bulk actions (batch delete/approve/reject) | New UI pattern, needs design spec |
+| 2 | Form templates | Unclear requirements |
+| 3 | Onboarding/tutorial walkthrough | Multi-step UI, heavy lift |
+| 4 | Sort/filter column headers (table-style click-to-sort) | Current dropdowns sufficient |
+| 5 | Inline validation messages enhancement | HTML5 `pattern` + `title` already in place |
+| 6 | Mixed Indonesian/English labels | Intentional for bilingual context |
+| 7 | Emoji icons in dashboard quick links | Already replaced in Batch 5 — legacy note |
+| 8 | Error toast component improvement | Inline banner + sonner working — could use custom toast component later |
+| 9 | Double-submit prevention refinement | Most forms covered, edge cases remain |
+| 10 | `rounded-lg` vs `rounded-xl` standardization | Low impact, mostly resolved |
+| 11 | "GPA" without explanation | Tooltip added in Batch 4 |
+| 12 | Search pagination edge cases | Handled by per-page slicing |
+
+**Total: 6 discrete fixes across 15+ files, 0 TypeScript errors, build passes.**

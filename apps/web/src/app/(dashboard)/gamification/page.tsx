@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { Star, Trophy, Flame, Award, Medal, Check } from "lucide-react"
 import { safeFetchJSON } from "@/lib/security"
 
 export default function GamificationPage() {
@@ -23,22 +24,22 @@ export default function GamificationPage() {
       {/* Stats cards */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <div className="rounded-xl border bg-card p-4">
-          <div className="text-2xl mb-1"><span aria-hidden="true">⭐</span></div>
+          <div className="text-2xl mb-1"><Star className="size-6" aria-hidden="true" /></div>
           <div className="text-2xl font-bold text-foreground">{xpData?.xp ?? 0}</div>
           <div className="text-xs text-muted-foreground">Total XP</div>
         </div>
         <div className="rounded-xl border bg-card p-4">
-          <div className="text-2xl mb-1"><span aria-hidden="true">🏆</span></div>
+          <div className="text-2xl mb-1"><Trophy className="size-6" aria-hidden="true" /></div>
           <div className="text-2xl font-bold text-foreground">{xpData?.level ?? 1}</div>
           <div className="text-xs text-muted-foreground">Level</div>
         </div>
         <div className="rounded-xl border bg-card p-4">
-          <div className="text-2xl mb-1"><span aria-hidden="true">🔥</span></div>
+          <div className="text-2xl mb-1"><Flame className="size-6" aria-hidden="true" /></div>
           <div className="text-2xl font-bold text-foreground">{xpData?.streak ?? 0} hari</div>
           <div className="text-xs text-muted-foreground">Streak</div>
         </div>
         <div className="rounded-xl border bg-card p-4">
-          <div className="text-2xl mb-1"><span aria-hidden="true">🎖️</span></div>
+          <div className="text-2xl mb-1"><Award className="size-6" aria-hidden="true" /></div>
           <div className="text-2xl font-bold text-foreground">{xpData?.badges?.length ?? 0}</div>
           <div className="text-xs text-muted-foreground">Badges</div>
         </div>
@@ -73,7 +74,7 @@ export default function GamificationPage() {
         <div role="tabpanel" id="panel-badges" aria-labelledby="tab-badges" className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
           {xpData?.badges?.map((b: any) => (
             <div key={b.id} className="rounded-xl border p-4 text-center">
-              <div className="text-3xl mb-2"><span aria-hidden="true">🎖️</span></div>
+              <div className="text-3xl mb-2"><Award className="size-8 mx-auto" aria-hidden="true" /></div>
               <div className="text-sm font-medium text-foreground">{b.name}</div>
               <div className="text-xs text-muted-foreground">{new Date(b.earnedAt).toLocaleDateString()}</div>
             </div>
@@ -90,7 +91,7 @@ export default function GamificationPage() {
             <div key={i} className={`flex items-center justify-between px-4 py-3 ${i < leaderboard.length - 1 ? "border-b" : ""}`}>
               <div className="flex items-center gap-3">
                 <span className={`text-lg font-bold w-8 ${i === 0 ? "text-yellow-500" : i === 1 ? "text-muted-foreground" : i === 2 ? "text-amber-600" : "text-muted-foreground"}`}>
-                  {i === 0 ? <span aria-hidden="true">🥇</span> : i === 1 ? <span aria-hidden="true">🥈</span> : i === 2 ? <span aria-hidden="true">🥉</span> : `#${entry.rank}`}
+                  {i === 0 ? <Medal className="size-5" aria-hidden="true" /> : i === 1 ? <Medal className="size-5 text-muted-foreground" aria-hidden="true" /> : i === 2 ? <Medal className="size-5 text-amber-600" aria-hidden="true" /> : `#${entry.rank}`}
                 </span>
                 <div>
                   <div className="text-sm font-medium text-foreground">{entry.nickname}</div>
@@ -115,7 +116,7 @@ export default function GamificationPage() {
                 </div>
                 <div className="text-right">
                   <div className="text-sm font-semibold text-foreground">+{c.xpReward} XP</div>
-                  {c.completed && <div className="text-xs text-green-600 dark:text-green-400">✓ Selesai</div>}
+                  {c.completed && <div className="text-xs text-green-600 dark:text-green-400"><Check className="size-3 inline mr-0.5" aria-hidden="true" />Selesai</div>}
                 </div>
               </div>
             </div>

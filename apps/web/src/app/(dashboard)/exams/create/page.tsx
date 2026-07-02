@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { safeFetchJSON, safeFetch } from "@/lib/security"
 import { Button } from "@/components/ui/button"
 import Breadcrumb from "@/components/breadcrumb"
@@ -33,7 +34,6 @@ export default function CreateExamPage() {
   const [passingScore, setPassingScore] = useState(0)
   const [questions, setQuestions] = useState<Question[]>([])
   const [isDirty, setIsDirty] = useState(false)
-  const [error, setError] = useState("")
 
   // ponytail: warn on navigate away with unsaved form data
   useEffect(() => {
@@ -61,7 +61,6 @@ export default function CreateExamPage() {
   }
 
   async function handleSubmit() {
-    setError("")
     const res = await safeFetch("/api/exams", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -71,7 +70,7 @@ export default function CreateExamPage() {
       const exam = await res.json()
       router.push(`/exams/${exam.id}`)
     } else {
-      setError("Failed to create exam. Please try again.")
+      toast.error("Failed to create exam. Please try again.")
     }
   }
 
@@ -81,7 +80,6 @@ export default function CreateExamPage() {
       <h1 className="mb-6 text-xl font-semibold">Create Exam</h1>
 
       <div className="space-y-6">
-        {error && <p className="text-sm text-red-500">{error}</p>}
         <label htmlFor="exam-title" className="sr-only">Exam Title *</label>
           <input id="exam-title" value={title} onChange={(e) => { setTitle(e.target.value); setIsDirty(true) }} placeholder="Exam title" maxLength={200} className="w-full rounded-lg border px-4 py-2 text-sm outline-none focus:border-ring" />
         <label htmlFor="exam-desc" className="sr-only">Description</label>

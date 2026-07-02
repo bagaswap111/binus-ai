@@ -3,7 +3,9 @@
 import { useSession } from "next-auth/react"
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { safeFetchJSON, safeFetch } from "@/lib/security"
+import type { LucideIcon } from "lucide-react"
+import { MessageCircle, BookOpen, Folder, FileText, HelpCircle, Search, PenTool, GraduationCap, Handshake, BarChart3, Hourglass } from "lucide-react"
+import { safeFetchJSON } from "@/lib/security"
 
 interface DashboardData {
   stats: { examCount: number; projectCount: number; sessionCount: number; pendingGrading: number; avgScore: number | null }
@@ -12,16 +14,16 @@ interface DashboardData {
 }
 
 const quickLinks = [
-  { href: "/chat", label: "Chat AI", desc: "Chat with AI assistant", icon: "💬", color: "bg-blue-50 dark:bg-blue-950" },
-  { href: "/subjects", label: "Subjects", desc: "Browse subjects & knowledge base", icon: "📚", color: "bg-green-50 dark:bg-green-950" },
-  { href: "/projects", label: "Projects", desc: "Manage your projects & files", icon: "📁", color: "bg-purple-50 dark:bg-purple-950" },
-  { href: "/exams", label: "Exams", desc: "Take exams & view results", icon: "📝", color: "bg-orange-50 dark:bg-orange-950" },
-  { href: "/questions", label: "Question Bank", desc: "Manage & generate questions", icon: "❓", color: "bg-pink-50 dark:bg-pink-950" },
-  { href: "/plagiarism", label: "Plagiarism Check", desc: "Check document similarity", icon: "🔍", color: "bg-red-50 dark:bg-red-950" },
-  { href: "/academic", label: "Academic Writing", desc: "Literature review, citation, outline", icon: "✍️", color: "bg-indigo-50 dark:bg-indigo-950" },
-  { href: "/teaching", label: "Teaching Tools", desc: "RPS generator, learning path", icon: "🎓", color: "bg-teal-50 dark:bg-teal-950" },
-  { href: "/collaboration", label: "Collaborate", desc: "Study groups & discussion forums", icon: "🤝", color: "bg-cyan-50 dark:bg-cyan-950" },
-  { href: "/analytics", label: "Analytics", desc: "Grade distribution & knowledge gaps", icon: "📊", color: "bg-amber-50 dark:bg-amber-950" },
+  { href: "/chat", label: "Chat AI", desc: "Chat with AI assistant", icon: MessageCircle, color: "bg-blue-50 dark:bg-blue-950" },
+  { href: "/subjects", label: "Subjects", desc: "Browse subjects & knowledge base", icon: BookOpen, color: "bg-green-50 dark:bg-green-950" },
+  { href: "/projects", label: "Projects", desc: "Manage your projects & files", icon: Folder, color: "bg-purple-50 dark:bg-purple-950" },
+  { href: "/exams", label: "Exams", desc: "Take exams & view results", icon: FileText, color: "bg-orange-50 dark:bg-orange-950" },
+  { href: "/questions", label: "Question Bank", desc: "Manage & generate questions", icon: HelpCircle, color: "bg-pink-50 dark:bg-pink-950" },
+  { href: "/plagiarism", label: "Plagiarism Check", desc: "Check document similarity", icon: Search, color: "bg-red-50 dark:bg-red-950" },
+  { href: "/academic", label: "Academic Writing", desc: "Literature review, citation, outline", icon: PenTool, color: "bg-indigo-50 dark:bg-indigo-950" },
+  { href: "/teaching", label: "Teaching Tools", desc: "RPS generator, learning path", icon: GraduationCap, color: "bg-teal-50 dark:bg-teal-950" },
+  { href: "/collaboration", label: "Collaborate", desc: "Study groups & discussion forums", icon: Handshake, color: "bg-cyan-50 dark:bg-cyan-950" },
+  { href: "/analytics", label: "Analytics", desc: "Grade distribution & knowledge gaps", icon: BarChart3, color: "bg-amber-50 dark:bg-amber-950" },
 ]
 
 export default function DashboardPage() {
@@ -47,15 +49,15 @@ export default function DashboardPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5">
-        <StatCard label="Exams" value={s?.examCount ?? "—"} icon="📝" />
-        <StatCard label="Projects" value={s?.projectCount ?? "—"} icon="📁" />
-        <StatCard label="Chat Sessions" value={s?.sessionCount ?? "—"} icon="💬" />
-        {isTeacher && <StatCard label="Pending Grading" value={s?.pendingGrading ?? "—"} icon="⏳" />}
+        <StatCard label="Exams" value={s?.examCount ?? "—"} icon={FileText} />
+        <StatCard label="Projects" value={s?.projectCount ?? "—"} icon={Folder} />
+        <StatCard label="Chat Sessions" value={s?.sessionCount ?? "—"} icon={MessageCircle} />
+        {isTeacher && <StatCard label="Pending Grading" value={s?.pendingGrading ?? "—"} icon={Hourglass} />}
         {!isTeacher && s?.avgScore !== null && s?.avgScore !== undefined && (
-          <StatCard label="Avg Score" value={`${s.avgScore}%`} icon="📊" />
+          <StatCard label="Avg Score" value={`${s.avgScore}%`} icon={BarChart3} />
         )}
         {isTeacher && s?.avgScore !== null && s?.avgScore !== undefined && (
-          <StatCard label="Class Avg" value={`${s.avgScore}%`} icon="📊" />
+          <StatCard label="Class Avg" value={`${s.avgScore}%`} icon={BarChart3} />
         )}
       </div>
 
@@ -66,7 +68,7 @@ export default function DashboardPage() {
           {quickLinks.map((link) => (
             <Link key={link.href} href={link.href}
               className={`${link.color} rounded-xl border p-4 hover:shadow-md transition-shadow`}>
-              <div className="text-2xl mb-2" aria-hidden="true">{link.icon}</div>
+              <link.icon className="size-6 mb-2" aria-hidden="true" />
               <div className="text-sm font-medium text-foreground">{link.label}</div>
               <div className="text-xs text-muted-foreground mt-0.5">{link.desc}</div>
             </Link>
@@ -139,10 +141,10 @@ export default function DashboardPage() {
   )
 }
 
-function StatCard({ label, value, icon }: { label: string; value: string | number; icon: string }) {
+function StatCard({ label, value, icon: Icon }: { label: string; value: string | number; icon: LucideIcon }) {
   return (
     <div className="rounded-xl border bg-card p-4">
-      <div className="text-2xl mb-1" aria-hidden="true">{icon}</div>
+      <Icon className="size-6 mb-1" aria-hidden="true" />
       <div className="text-2xl font-bold text-foreground">{value}</div>
       <div className="text-xs text-muted-foreground">{label}</div>
     </div>

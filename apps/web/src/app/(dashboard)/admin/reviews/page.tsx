@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { Hourglass, CheckCheck, XCircle } from "lucide-react"
 import { safeFetchJSON, safeFetch } from "@/lib/security"
 import Breadcrumb from "@/components/breadcrumb"
 
@@ -52,7 +53,7 @@ export default function ReviewsPage() {
               aria-selected={tab === s}
               aria-controls={`panel-${s}`}
               id={`tab-${s}`}
-            >{s === "PENDING" ? <><span aria-hidden="true">⏳</span> Pending</> : s === "APPROVED" ? <><span aria-hidden="true">✅</span> Approved</> : <><span aria-hidden="true">❌</span> Rejected</>}</button>
+            >{s === "PENDING" ? <><Hourglass className="size-4 inline mr-1" aria-hidden="true" /> Pending</> : s === "APPROVED" ? <><CheckCheck className="size-4 inline mr-1" aria-hidden="true" /> Approved</> : <><XCircle className="size-4 inline mr-1" aria-hidden="true" /> Rejected</>}</button>
           ))}
         </div>
       </div>

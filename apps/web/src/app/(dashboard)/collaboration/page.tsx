@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { Pin } from "lucide-react"
 import { safeFetchJSON, safeFetch } from "@/lib/security"
 import { Button } from "@/components/ui/button"
 
@@ -178,7 +179,7 @@ function ForumsTab() {
             <button key={f.id} onClick={() => selectForum(f.id)}
               className={`sel-item ${selected === f.id ? "sel-item-active" : ""}`}
             >
-              <div className="truncate font-medium">{f.title} {f.isPinned && "📌"}</div>
+              <div className="truncate font-medium">{f.title} {f.isPinned && <Pin className="size-3.5 inline ml-1" aria-hidden="true" />}</div>
               <div className="text-xs text-muted-foreground">{f._count.posts} posts &middot; {f.createdBy.name}</div>
             </button>
           ))}

@@ -24,6 +24,7 @@ export default function ExamsPage() {
   const router = useRouter()
   const [exams, setExams] = useState<Exam[]>([])
   const [search, setSearch] = useState("")
+  const [sort, setSort] = useState("date")
   const [page, setPage] = useState(1)
   const perPage = 20
   const isTeacher = ["TEACHER", "LECTURER", "ADMIN", "SUPER_ADMIN"].includes(session?.user?.role || "")
@@ -33,8 +34,13 @@ export default function ExamsPage() {
   }, [])
 
   const filtered = exams.filter((e) => !search || e.title.toLowerCase().includes(search.toLowerCase()) || e.subject.code.toLowerCase().includes(search.toLowerCase()))
-  const totalPages = Math.ceil(filtered.length / perPage)
-  const paged = filtered.slice((page - 1) * perPage, page * perPage)
+  const sorted = [...filtered].sort((a, b) => {
+    if (sort === "title") return a.title.localeCompare(b.title)
+    if (sort === "status") return a.status.localeCompare(b.status)
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  })
+  const totalPages = Math.ceil(sorted.length / perPage)
+  const paged = sorted.slice((page - 1) * perPage, page * perPage)
 
   return (
     <div>
@@ -42,6 +48,11 @@ export default function ExamsPage() {
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-xl font-semibold">Exams</h1>
         <div className="flex items-center gap-3">
+          <select value={sort} onChange={(e) => setSort(e.target.value)} className="rounded-lg border px-3 py-1.5 text-sm outline-none focus:border-ring">
+            <option value="date">Newest</option>
+            <option value="title">Title</option>
+            <option value="status">Status</option>
+          </select>
           <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} placeholder="Search exams..." className="rounded-lg border px-3 py-1.5 text-sm outline-none focus:border-ring w-48" />
           {isTeacher && (
             <Button onClick={() => router.push("/exams/create")}>

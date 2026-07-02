@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "sonner";
 import AuthProvider from "@/components/auth/session-provider";
 import ThemeProvider from "@/components/theme-provider";
 
@@ -27,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${fontSans.variable} ${fontMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <ThemeProvider><AuthProvider>{children}</AuthProvider></ThemeProvider>
+        <ThemeProvider><AuthProvider>{children}<Toaster richColors /></AuthProvider></ThemeProvider>
       </body>
     </html>
   );

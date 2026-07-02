@@ -1,4 +1,7 @@
 ---
+scope: '**/*.{html,jsx,tsx,vue,svelte,astro}'
+---
+---
 name: usability-heuristics
 description: "Evaluates UI against Jakob Nielsen's 10 usability heuristics. Spawns page-by-page review, scores each heuristic, and produces a structured report with severity ratings."
 ---

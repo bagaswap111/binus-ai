@@ -19,6 +19,8 @@ const navItems = [
   { href: "/analytics", label: "Analytics" },
   { href: "/career", label: "Career" },
   { href: "/gamification", label: "Gamification" },
+  { href: "/faq", label: "FAQ" },
+  { href: "/contact", label: "Contact" },
   { href: "/admin", label: "Admin", roles: ["ADMIN", "SUPER_ADMIN"] },
 ]
 

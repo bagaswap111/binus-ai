@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { Shield } from "lucide-react"
+import { toast } from "sonner"
 import { safeFetchJSON, safeFetch } from "@/lib/security"
 import { Button } from "@/components/ui/button"
 
@@ -21,7 +23,6 @@ export default function AdminPage() {
   const [modelId, setModelId] = useState("")
   const [provider, setProvider] = useState("OPENAI")
   const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState("")
 
   useEffect(() => { safeFetchJSON<Model[]>("/api/admin/models").then((d) => d && setModels(d)) }, [])
 
@@ -29,7 +30,6 @@ export default function AdminPage() {
     e.preventDefault()
     if (submitting) return
     setSubmitting(true)
-    setError("")
     const res = await safeFetch("/api/admin/models", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -49,7 +49,7 @@ export default function AdminPage() {
       const m = await res.json()
       setModels((prev) => [...prev, m])
     } else {
-      setError("Failed to add model. Please try again.")
+      toast.error("Failed to add model. Please try again.")
     }
     setSubmitting(false)
   }
@@ -68,7 +68,7 @@ export default function AdminPage() {
   return (
     <div>
       <a href="/admin/reviews" className="mb-4 inline-block rounded-lg border px-4 py-3 text-sm hover:bg-muted transition-colors">
-        🛡️ Content Review Queue <span className="text-muted-foreground">→</span>
+        <Shield className="size-4 inline mr-1.5" aria-hidden="true" />Content Review Queue <span className="text-muted-foreground">→</span>
       </a>
       <h1 className="mb-6 mt-4 text-xl font-semibold">Admin — Model Registry</h1>
 
@@ -78,7 +78,7 @@ export default function AdminPage() {
 
       {showForm && (
         <form onSubmit={addModel} className="mb-6 space-y-3 rounded-lg border p-4">
-          {error && <p className="text-sm text-red-500">{error}</p>}
+
           <label htmlFor="admin-name" className="sr-only">Display Name</label>
           <input id="admin-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Display Name (e.g. GPT-4o Mini)" required className="w-full rounded-md border px-3 py-2 text-sm" />
           <label htmlFor="admin-modelid" className="sr-only">Model ID</label>

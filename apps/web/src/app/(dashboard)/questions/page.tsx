@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { toast } from "sonner"
 import { safeFetchJSON, safeFetch } from "@/lib/security"
 import { Button } from "@/components/ui/button"
 
@@ -23,6 +24,7 @@ export default function QuestionsPage() {
   const [questions, setQuestions] = useState<QBQuestion[]>([])
   const [showForm, setShowForm] = useState(false)
   const [search, setSearch] = useState("")
+  const [sort, setSort] = useState("date")
   const [page, setPage] = useState(1)
   const perPage = 20
 
@@ -31,14 +33,26 @@ export default function QuestionsPage() {
   }, [])
 
   const filtered = questions.filter((q) => !search || q.question.toLowerCase().includes(search.toLowerCase()) || (q.tags && q.tags.some((t) => t.toLowerCase().includes(search.toLowerCase()))))
-  const totalPages = Math.ceil(filtered.length / perPage)
-  const paged = filtered.slice((page - 1) * perPage, page * perPage)
+  const sorted = [...filtered].sort((a, b) => {
+    if (sort === "type") return a.type.localeCompare(b.type)
+    if (sort === "difficulty") return (a.difficulty || "").localeCompare(b.difficulty || "")
+    if (sort === "bloom") return (a.bloomLevel || "").localeCompare(b.bloomLevel || "")
+    return new Date(b.id).getTime() - new Date(a.id).getTime() // ponytail: id-based date fallback
+  })
+  const totalPages = Math.ceil(sorted.length / perPage)
+  const paged = sorted.slice((page - 1) * perPage, page * perPage)
 
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-xl font-semibold">Question Bank</h1>
         <div className="flex items-center gap-3">
+          <select value={sort} onChange={(e) => setSort(e.target.value)} className="rounded-lg border px-3 py-1.5 text-sm outline-none focus:border-ring">
+            <option value="date">Newest</option>
+            <option value="type">Type</option>
+            <option value="difficulty">Difficulty</option>
+            <option value="bloom">Bloom Level</option>
+          </select>
           <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} placeholder="Search questions..." className="rounded-lg border px-3 py-1.5 text-sm outline-none focus:border-ring w-48" />
           <Button onClick={() => setShowForm(!showForm)}>
             {showForm ? "Cancel" : "+ New Question"}
@@ -83,7 +97,6 @@ export default function QuestionsPage() {
 function QuestionForm({ onDone }: { onDone: () => void }) {
   const [subjects, setSubjects] = useState<Array<{ id: string; name: string; code: string }>>([])
   const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState("")
   const [form, setForm] = useState({
     subjectId: "", type: "essay", question: "", options: ["", "", "", ""], answer: "",
     maxScore: 10, bloomLevel: "", tags: "", difficulty: "",
@@ -94,7 +107,6 @@ function QuestionForm({ onDone }: { onDone: () => void }) {
   async function handleSubmit() {
     if (submitting) return
     setSubmitting(true)
-    setError("")
     const res = await safeFetch("/api/questions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -106,7 +118,7 @@ function QuestionForm({ onDone }: { onDone: () => void }) {
     })
     setSubmitting(false)
     if (res) onDone()
-    else setError("Failed to save question. Please try again.")
+    else toast.error("Failed to save question. Please try again.")
   }
 
   return (
@@ -138,7 +150,6 @@ function QuestionForm({ onDone }: { onDone: () => void }) {
         <label htmlFor="q-score" className="sr-only">Max Score</label>
         <input id="q-score" type="number" value={form.maxScore} onChange={(e) => setForm({ ...form, maxScore: Number(e.target.value) })} min={1} max={1000} className="w-20 rounded border px-3 py-1.5 text-sm outline-none" placeholder="Score" />
       </div>
-      {error && <p className="text-sm text-red-500">{error}</p>}
       <label htmlFor="q-text" className="sr-only">Question *</label>
       <textarea id="q-text" value={form.question} onChange={(e) => setForm({ ...form, question: e.target.value })} className="w-full rounded border px-3 py-1.5 text-sm outline-none" rows={2} placeholder="Question" />
       {form.type === "multiple_choice" && form.options.map((opt, i) => (

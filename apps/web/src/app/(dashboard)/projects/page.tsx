@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { safeFetchJSON, safeFetch } from "@/lib/security"
 import { Button } from "@/components/ui/button"
 
@@ -19,16 +20,22 @@ export default function ProjectsPage() {
   const [name, setName] = useState("")
   const [desc, setDesc] = useState("")
   const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState("")
+  const [search, setSearch] = useState("")
+  const [sort, setSort] = useState("date")
   const router = useRouter()
 
   useEffect(() => { safeFetchJSON<Project[]>("/api/projects").then((d) => d && setProjects(d)) }, [])
+
+  const filtered = projects.filter((p) => !search || p.name.toLowerCase().includes(search.toLowerCase()))
+  const sorted = [...filtered].sort((a, b) => {
+    if (sort === "name") return a.name.localeCompare(b.name)
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  })
 
   async function create(e: React.FormEvent) {
     e.preventDefault()
     if (submitting) return
     setSubmitting(true)
-    setError("")
     const res = await safeFetch("/api/projects", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -39,7 +46,7 @@ export default function ProjectsPage() {
       const data = await res.json()
       router.push(`/projects/${data.id}`)
     } else {
-      setError("Failed to create project. Please try again.")
+      toast.error("Failed to create project. Please try again.")
     }
     setSubmitting(false)
   }
@@ -48,22 +55,29 @@ export default function ProjectsPage() {
     <div>
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-xl font-semibold">Projects</h1>
-        <Button onClick={() => setShowForm(!showForm)}>
-          + New Project
-        </Button>
+        <div className="flex items-center gap-3">
+          <select value={sort} onChange={(e) => setSort(e.target.value)} className="rounded-lg border px-3 py-1.5 text-sm outline-none focus:border-ring">
+            <option value="date">Newest</option>
+            <option value="name">Name</option>
+          </select>
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search projects..." className="rounded-lg border px-3 py-1.5 text-sm outline-none focus:border-ring w-48" />
+          <Button onClick={() => setShowForm(!showForm)}>
+            + New Project
+          </Button>
+        </div>
       </div>
 
       {showForm && (
         <form onSubmit={create} className="mb-6 space-y-3 rounded-lg border p-4">
-          {error && <p className="text-sm text-red-500">{error}</p>}
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Project name" required className="w-full rounded-md border px-3 py-2 text-sm" />
           <textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Description (optional)" className="w-full rounded-md border px-3 py-2 text-sm" rows={2} />
           <Button type="submit" disabled={submitting}>{submitting ? "Creating..." : "Create"}</Button>
         </form>
       )}
 
+      {sorted.length === 0 && <p className="pt-10 text-center text-muted-foreground">{search ? "No projects match your search" : "No projects yet"}</p>}
       <div className="grid gap-3 sm:grid-cols-2">
-        {projects.map((p) => (
+        {sorted.map((p) => (
           <button key={p.id} onClick={() => router.push(`/projects/${p.id}`)}
             className="rounded-lg border p-4 text-left hover:border-ring"
           >
