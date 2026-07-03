@@ -2,6 +2,21 @@
 
 AI-powered adaptive learning platform for K-12 to university, with role-based expertise adaptation, policy-filtered model selection, and multi-layer conversation filtering.
 
+## Sneak Peek
+
+| Dashboard | Chat AI |
+|-----------|---------|
+| ![Dashboard](apps/web/public/images/dashboard.png) | ![Chat](apps/web/public/images/chat.png) |
+
+| Exams | Question Bank |
+|-------|---------------|
+| ![Exams](apps/web/public/images/exams.png) | ![Questions](apps/web/public/images/questions.png) |
+
+| Gamification |
+|--------------|
+| ![Gamification](apps/web/public/images/gamification.png) |
+
+
 ## Architecture
 
 ```
